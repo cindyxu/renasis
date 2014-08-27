@@ -1,0 +1,13 @@
+extends layout
+
+block append links
+	script(src="/javascripts/dress.js")
+
+block content
+	h1= title
+	p Welcome to #{title}
+
+	#wardrobe
+		ul
+			li= test1
+			li= test2

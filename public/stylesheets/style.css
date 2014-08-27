@@ -1,0 +1,370 @@
+@import "reset.css";
+/* colors */
+h1 {
+  font-family: "Lora", serif;
+  font-size: 4rem;
+  color: #fff;
+  text-shadow: -1px 0 #2f230e, 0 2px #2f230e, 1px 0 #2f230e, 0 -1px #2f230e;
+}
+*,
+*:before,
+*:after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+body {
+  font: 13px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background-color: #ecdcbf;
+  color: #2f230e;
+  min-width: 40rem;
+}
+body,
+html {
+  height: 100%;
+}
+.quote-left {
+  background-color: #fff;
+  padding: 1rem;
+  border-bottom: 1px solid #d6a770;
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  margin-left: 150px;
+}
+.quote-right {
+  background-color: #fff;
+  padding: 1rem;
+  border-bottom: 1px solid #d6a770;
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  margin-right: 150px;
+}
+.post:nth-of-type(2n+1) {
+  background-color: rgba(255,255,255,0.2);
+}
+.quote-container {
+  display: block;
+  padding: 2rem;
+}
+.quote-container .quote-links {
+  text-align: right;
+}
+.link-med {
+  font-size: 1.5rem;
+  font-family: 'Francois One', sans-serif;
+  text-shadow: 0 1px #d6a770;
+}
+.desc {
+  font-size: 0.8rem;
+}
+a:link {
+  text-decoration: none;
+  color: #2f230e;
+}
+#content {
+  position: relative;
+  height: 100%;
+}
+#nav-bar {
+  width: 100px;
+  height: 100%;
+  position: fixed;
+  left: 0;
+  text-align: center;
+  background-color: #2f230e;
+  z-index: 999;
+}
+#nav-bar .nav-item {
+  display: block;
+}
+#nav-bar .nav-item a {
+  color: #f3e9d7;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem 0;
+}
+#inner-content {
+  margin-left: 100px;
+  padding: 1rem 0;
+  height: 100%;
+}
+#splash {
+  text-align: center;
+  height: 100%;
+  font-size: 1rem;
+  color: #fff;
+}
+#splash font,
+#splash #dummy-block {
+  height: 40%;
+  display: block;
+}
+#splash form#login {
+  background-color: rgba(88,33,0,0.7);
+  padding: 2rem 1rem;
+  text-align: right;
+  margin: 0 auto;
+  display: inline-block;
+}
+#splash form#login input {
+  font-size: 1.5rem;
+  margin-left: 1rem;
+  color: #ffd700;
+}
+input {
+  border-width: 0px;
+  border-bottom: 1px solid #fff;
+  background-color: transparent;
+  padding: 2px;
+}
+#thread-list li.thread-row {
+  padding: 0 2rem;
+  border-bottom: 1px solid #e0c798;
+}
+#thread-list li.thread-row.stickied .title,
+#thread-list li.thread-row.unread .title {
+  font-weight: bold;
+}
+#thread-list li.thread-row.header {
+  background-color: #fff;
+  -webkit-box-shadow: 0 5px 20px -5px #d6a770;
+  -moz-box-shadow: 0 5px 20px -5px #d6a770;
+  box-shadow: 0 5px 20px -5px #d6a770;
+  zindex: 1;
+  position: relative;
+}
+#thread-list li.thread-row > * {
+  display: inline-block;
+}
+#thread-list li.thread-row .title {
+  display: inline-block;
+  height: 100%;
+  width: 50%;
+}
+#thread-list li.thread-row .title .thread-link {
+  padding-top: 0.8rem;
+  display: block;
+  font-size: 1rem;
+}
+#thread-list li.thread-row .title .pages {
+  padding-bottom: 0.4rem;
+  font-size: 0.7rem;
+  display: block;
+}
+#thread-list li.thread-row .creator {
+  width: 15%;
+}
+#thread-list li.thread-row .last-reply {
+  width: 15%;
+}
+#thread-list li.thread-row .stats {
+  width: 19%;
+  font-size: 0.7rem;
+}
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+#dressroom {
+  height: 100%;
+  min-width: 700px;
+  min-height: 300px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+}
+#dressroom #wardrobe-col {
+  display: inline-block;
+  width: 35%;
+  height: 100%;
+}
+#dressroom #wardrobe-col #wardrobe {
+  width: 100%;
+  padding: 0 1rem;
+}
+#dressroom #wardrobe-col #wardrobe #wardrobe-inner {
+  height: 100%;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+  padding-top: 1.5rem;
+  position: relative;
+}
+#dressroom #wardrobe-col #wardrobe #wardrobe-inner ul#subcategory-tabs {
+  text-align: left;
+  font-size: 1.5rem;
+  z-index: 1;
+  width: 100%;
+  display: inline-block;
+}
+#dressroom #wardrobe-col #wardrobe #wardrobe-inner ul#subcategory-tabs li {
+  display: inline-block;
+  padding: 0.2rem 0.3rem 0.15rem 0.3rem;
+  font-size: 0.5rem;
+  -webkit-border-radius: 3px 3px 0 0;
+  -moz-border-radius: 3px 3px 0 0;
+  border-radius: 3px 3px 0 0;
+  color: #fff;
+  margin-right: 0.2rem;
+  background-color: #d6a770;
+}
+#dressroom #wardrobe-col #wardrobe #wardrobe-inner #subcategory-items {
+  height: 100%;
+  background-color: #fff;
+  overflow-y: scroll;
+  -webkit-border-radius: 0 0 10px 10px;
+  -moz-border-radius: 0 0 10px 10px;
+  border-radius: 0 0 10px 10px;
+  padding: 0.5rem;
+  text-align: left;
+}
+#dressroom #wardrobe-col #wardrobe ul li {
+  display: inline-block;
+}
+#dressroom #equipped-col {
+  text-align: left;
+  padding: 0 0.5rem;
+  display: inline-block;
+  min-width: 200px;
+}
+#dressroom #equipped-col #equipped-inner {
+  height: 160px;
+}
+#dressroom #equipped-col #equipped-inner .equipped-layer {
+  margin-bottom: 0.5rem;
+}
+#dressroom #equipped-col #equipped-inner .equipped-layer .header {
+  display: inline-block;
+  padding: 0.2rem 0.3rem 0.15rem 0.3rem;
+  font-size: 0.5rem;
+  -webkit-border-radius: 3px 3px 0 0;
+  -moz-border-radius: 3px 3px 0 0;
+  border-radius: 3px 3px 0 0;
+  background-color: #eeb090;
+}
+#dressroom #equipped-col #equipped-inner .equipped-layer ul {
+  background-color: #fff;
+  border: 1px solid #e0c798;
+}
+#dressroom #equipped-col #equipped-inner .equipped-layer ul li {
+  padding: 0.1rem 0;
+  border-bottom: 1px solid #e0c798;
+  clear: both;
+}
+#dressroom #equipped-col #equipped-inner .equipped-layer ul li .name {
+  display: inline-block;
+}
+#dressroom #equipped-col #equipped-inner .equipped-layer ul li .actions {
+  float: right;
+}
+#dressroom #equipped-col #equipped-inner .equipped-layer ul li .actions button {
+  background-color: #d6a770;
+  border-width: 0;
+  height: 100%;
+  color: #fff;
+  -webkit-border-radius: 0.5rem;
+  -moz-border-radius: 0.5rem;
+  border-radius: 0.5rem;
+}
+#dressroom #preview {
+  display: inline-block;
+  width: 118px;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+#dressroom #preview > * {
+  display: inline-block;
+  width: 30%;
+  height: 100%;
+  overflow: scroll;
+}
+#dressroom #preview #preview-inner {
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+  background-color: #fff;
+  width: 118px;
+  height: 160px;
+  overflow: hidden;
+}
+#forum-bar {
+  display: block;
+  background-color: #fff;
+  overflow: auto;
+  width: 100%;
+  padding: 0 2rem;
+  padding-bottom: 1rem;
+}
+#forum-bar #forum-title {
+  display: inline;
+  float: left;
+}
+#forum-bar #forum-title #forum-name {
+  font-size: 2rem;
+  font-family: 'Francois One', sans-serif;
+  text-shadow: 0 1px #d6a770;
+}
+#forum-bar #forum-actions {
+  display: inline-block;
+  text-align: right;
+  float: right;
+}
+#forum-bar #forum-actions a {
+  display: inline-block;
+  background-color: #2f230e;
+  font-size: 1.5rem;
+  padding: 0.8rem 1.6rem;
+  margin: 1px;
+  color: #ecdcbf;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+}
+#forum-bar #forum-actions a#new-thread {
+  margin-left: 1rem;
+}
+.forum-section {
+  margin: 0 auto;
+  width: 80%;
+  max-width: 50rem;
+}
+.forum-section a:link {
+  color: #b96c35;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+}
+.forum-section .forum-header {
+  padding: 0 3em;
+  position: relative;
+  top: 1.5rem;
+}
+.forum-section .forum-subforums {
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  background-color: #f3e9d7;
+  border: 1px solid #e0c798;
+  border-bottom: 2px solid #d6b679;
+  padding: 2rem 0 1rem 0;
+}
+.forum-section .forum-subforums .forum-row {
+  border-bottom: 1px solid #e0c798;
+}
+.forum-section .forum-subforums .forum-row:last-child {
+  border-bottom-width: 0;
+}
+.forum-section .forum-subforums .forum-row .subforum {
+  padding: 1rem 2rem;
+  margin: 0 2%;
+  width: 45.9%;
+  display: inline-block;
+}
+.forum-section .forum-subforums .forum-row .subforum:first-child {
+  border-right: 1px solid #e0c798;
+}

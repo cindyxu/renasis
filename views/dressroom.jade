@@ -1,0 +1,42 @@
+extends layout
+
+block append links
+	script(src="/javascripts/dressroom.js")
+
+mixin wardrobe-col(items)
+	#wardrobe-col
+		#wardrobe
+			#wardrobe-inner
+				ul#subcategory-tabs
+					li= "hair"
+					li= "top"
+					li= "bottom"
+					li= "back"
+				#subcategory-items
+					ul
+						- for cat in wardrobe
+							- for i, item in cat
+								li.wardrobe-item( data-item-name= item.name, data-item-id= item.id, data-item-layer= item.layer )
+
+mixin equipped-col(equipped)
+	#equipped-col
+		#equipped
+			#equipped-inner
+				#equipped-items
+					ul
+						- for i, cat in equipped
+							li.equipped-layer( data-layer=cat )
+								span.header= cat
+								ul
+									- var equippedCat = equipped[cat]
+									- for (var j = equippedCat.length-1; j >= 0; j--)
+										- var item = equippedCat[j]
+										li.equipped-item( data-item-name= item.name, data-item-id= item._id.toString().replace(/"/g, "") )
+
+block inner-content
+	#dressroom
+		mixin wardrobe-col()
+		#preview
+			#preview-inner
+				img#avatar-preview(src="/images/testout.png")
+		mixin equipped-col(character.equipped)
