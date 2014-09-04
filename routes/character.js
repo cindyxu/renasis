@@ -23,44 +23,51 @@ module.exports = function(utils) {
 	var gm = utils.gm;
 	var Q = utils.Q;
 
-	var dbchars = db.get("characters");
-	var dbitems = db.get("items");
+	var dbChars = db.get("characters");
+	var dbItems = db.get("items");
 	
 	var charHelper = utils.charHelper;
 	var itemHelper = utils.itemHelper;
-
+	var constants = utils.constants;
+	
 	var charExport = {};
 
-	var constants = utils.constants;
-
 	charExport.dressroom = function(req, res) {
-		dbchars.findOne({}, function(err, charObj) {
-			charHelper.fetchEquippedItemObjs(charObj.equipped_ids, function(equippedItemObjs) {
-				charHelper.fetchWardrobeSubcategoryItemObjs(charObj, constants.DEFAULT_WARDROBE_CATEGORY, function(wardrobeItemObjs) {
-					charObj.equipped = equippedItemObjs;
+		dbChars.findOne({}, function(err, charObj) {
+			charHelper.fetchWardrobeSubcategoryItemObjs(charObj, constants.DEFAULT_WARDROBE_CATEGORY, function(wardrobeItemObjs) {
+				charHelper.fetchOutfitItemObjs(charObj.outfit_wip, function() {
+					charHelper.markItemsInOutfit(wardrobeItemObjs, charObj.outfit_wip);
 					res.render('dressroom', { title: 'Express', "character": charObj, "wardrobe" : wardrobeItemObjs });
-				})
+				});
 			});
 		});
 	};
 
+	// TAKES IN: item_id, (char_id)
+	// RETURNS: avatar_img_path, character, removed
 	charExport.toggleEquipItem = function(req, res) {
-		//generate new avatar
 		var itemId = req.body.item_id;
-		dbchars.findOne({}, function(err, charObj) {
-			charHelper.toggleEquipItem(charObj, itemId, req.body.forceRemove, function(removed, docs) {
-				charHelper.fetchEquippedItemObjs(charObj.equipped_ids, function(itemObjs) {
-					charObj.equipped = itemObjs;
-					charHelper.compAvatar(itemObjs, function() {
-						res.send({ "avatar_img_path" : "images/testout.png", "character" : charObj, "removed" : removed });
+		dbChars.findOne({}, function(err, charObj) {
+			dbItems.findById(itemId, function(err, itemObj) {
+				var callback = function(charObjNew, results) {
+					charHelper.fetchOutfitItemObjs(charObjNew.outfit_wip, function() {
+						charHelper.compAvatar(charObjNew.outfit_wip.pose, charObjNew.outfit_wip.equip_attrs, function() {
+							res.send({ "avatar_img_path" : "images/testout.png", "character" : charObjNew, "results" : results });
+						});
 					});
-				});
-			});
-		});	
+				};
+				if (req.body.equip_attrs) {
+					charHelper.equipItemWip(charObj, itemObj, req.body.equip_attrs, callback);
+				}
+				else {
+					charHelper.unequipItemWip(charObj, itemObj, callback);
+				}
+			});	
+		});
 	};
 
 	charExport.getWardrobeSubcategoryItems = function(req, res) {
-		dbchars.findOne({}, function(err, charObj) {
+		dbChars.findOne({}, function(err, charObj) {
 			charHelper.fetchWardrobeSubcategoryItemObjs(charObj, req.params.subcategory, function(wardrobeItemObjs) {
 				res.send({ "wardrobe" : wardrobeItemObjs });
 			});

@@ -1,12 +1,12 @@
 db = new Mongo().getDB("renasistest");
-db.items.drop();
-db.items.insert({ 
+db.item_blueprints.drop();
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "base", 
-	name: "base", 
-	varieties: ["1"], 
+	name: "human1", 
+	varieties: ["human1"], 
 	poses: {
-		"front_arm" : { 
+		"arm_above" : { 
 			"0" : { 
 				"offset": [31, 63] } }, 
 		"head" : { 
@@ -15,106 +15,115 @@ db.items.insert({
 		"torso" : {
 			"0" : {
 				"offset" : [21, 60] } },
-		"front_leg" : {
+		"leg_above" : {
 			"0" : {
 				"offset" : [28, 76] } },
-		"back_leg" : {
+		"leg_behind" : {
 			"0" : {
 				"offset" : [18, 75] } },
-		"back_arm" : { 
+		"arm_behind" : { 
 			"0" : { 
 				"offset": [17, 63] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "hair", 
 	name: "mermaid", 
 	varieties: ["aquamarine"], 
 	poses: { 
-		"front_b" : { 
+		"above_b" : { 
 			"0" : { 
 				"offset" : [8, 35] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "hair", 
 	name: "miko", 
 	varieties: ["pink"], 
 	poses: { 
-		"front_b" : { 
+		"above_b" : { 
 			"0" : { 
 				"offset" : [10, 37] } }, 
-		"back" : { 
+		"behind" : { 
 			"0" : { 
 				"offset" : [13, 36] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "hair", 
 	name: "static", 
 	varieties: ["blue", "black"], 
 	poses: { 
-		"front_b" : { 
+		"above_b" : { 
 			"0" : { 
 				"offset" : [12, 35] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
+	category: "clothing", 
+	subcategory: "face", 
+	name: "unimpressed", 
+	varieties: ["yellow"], 
+	poses: { 
+		"above_b" : { 
+			"0" : { 
+				"offset" : [18, 50] } } } });
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "head", 
 	name: "fox_ears", 
 	varieties: ["red"], 
 	poses: { 
-		"front_b" : { 
+		"above_b" : { 
 			"0" : { 
 				"offset" : [32, 34] } }, 
-		"back" : { 
+		"behind" : { 
 			"0" : { 
 				"offset" : [12, 34] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "head", 
 	name: "roses", 
 	varieties: ["red"], 
 	poses: { 
-		"front_b" : { 
+		"above_b" : { 
 			"0" : { 
 				"offset" : [31, 37] } }, 
-		"back" : { 
+		"behind" : { 
 			"0" : { 
 				"offset" : [12, 37] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "top", 
 	name: "tank_top", 
 	varieties: ["aqua"], 
 	poses: { 
-		"front_b" : { 
+		"above_b" : { 
 			"0" : { 
 				"offset" : [20, 67] } },
-		"front_a" : { 
+		"above_a" : { 
 			"0" : { 
 				"offset" : [25, 63] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "top", 
 	name: "sweater", 
 	varieties: ["salmon"], 
 	poses: {
-		"front_a" : { 
+		"above_a" : { 
 			"0" : { 
 				"offset" : [17, 63] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "top", 
 	name: "shirt", 
 	varieties: ["black"], 
 	poses: { 
-		"front_a" : { 
+		"above_a" : { 
 			"0" : { 
 				"offset" : [30, 64] } },
-		"front_b" : { 
+		"above_b" : { 
 			"0" : { 
 				"offset" : [20, 65] } },
-		"front_c" : { 
+		"above_c" : { 
 			"0" : { 
 				"offset" : [21, 64] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "back", 
 	name: "wings", 
@@ -123,34 +132,59 @@ db.items.insert({
 		"back" : { 
 			"0" : { 
 				"offset" : [8, 42] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "bottom", 
 	name: "jeans", 
 	varieties: ["navy"], 
 	poses: { 
-		"front_b" : { 
+		"above_b" : { 
 			"0" : { 
 				"offset" : [20, 76] } } } });
-db.items.insert({ 
+db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "feet", 
 	name: "sneakers", 
 	varieties: ["red"], 
 	poses: { 
-		"front_b" : { 
+		"above_b" : { 
 			"0" : { 
 				"offset" : [18, 87] } } } });
-db.characters.update({}, { "$set" : { "equipped_ids" : [] }});
-var subcategories = db.items.distinct('subcategory');
-var subcategoryItems = {};
-for (var i = 0; i < subcategories.length; i++) {
-	var res = db.items.find({ "subcategory" : subcategories[i] }, { _id: 1 }).toArray();
-	var resIds = [];
-	for (var j = 0; j < res.length; j++) {
-		resIds[j] = res[j]._id;
-	}
-	subcategoryItems[subcategories[i]] = resIds;
+db.characters.drop();
+db.characters.insert({ 
+	"name" : "Perplexi", 
+	"user_id" : db.users.findOne({ "username" : "god" })._id, 
+	"outfit_wip" : { 
+		"equip_attrs" : {
+			"front" : [],
+			"back" : []
+		}, 
+		"pose" : { 
+			"above_a" : "0",
+			"above_b" : "0",
+			"above_c" : "0",
+			"behind" : "0",
+			"back" : "0"
+		} 
+	} 
+});
+
+var item_blueprints = db.item_blueprints.find().toArray();
+db.items.drop();
+var items = [];
+for (var i = 0; i < item_blueprints.length; i++) {
+	var item_blueprint = item_blueprints[i];
+	var item = {
+		_id : new ObjectId(),
+		name : item_blueprint.name,
+		category : item_blueprint.category,
+		subcategory : item_blueprint.subcategory,
+		varieties : item_blueprint.varieties,
+		poses : item_blueprint.poses,
+		blueprint_id: item_blueprint._id
+	};
+	db.items.insert(item);
+	items.push(item);
 }
 
-db.users.update({ "username" : "god" }, { "$set" : { "inventory" : { "clothes" : subcategoryItems }}});
+db.users.update({ "username" : "god" }, { "$set" : { "inventory" : items }});

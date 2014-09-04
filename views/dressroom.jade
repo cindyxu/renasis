@@ -3,35 +3,48 @@ extends layout
 block append links
 	script(src="/javascripts/dressroom.js")
 
-mixin wardrobe-col(items)
+mixin wardrobe-col()
 	#wardrobe-col
 		#wardrobe
 			#wardrobe-inner
 				ul#subcategory-tabs
-					li= "hair"
-					li= "top"
-					li= "bottom"
-					li= "back"
+					li.hover-pointer= "base"
+					li.hover-pointer= "face"
+					li.hover-pointer= "hair"
+					li.hover-pointer= "head"
+					li.hover-pointer= "top"
+					li.hover-pointer= "bottom"
+					li.hover-pointer= "feet"
+					li.hover-pointer= "back"
 				#subcategory-items
 					ul
-						- for cat in wardrobe
-							- for i, item in cat
-								li.wardrobe-item( data-item-name= item.name, data-item-id= item.id, data-item-layer= item.layer )
+						- for item, i in wardrobe
+							li.wardrobe-item.hover-pointer( 
+								data-item-name= item.name, 
+								data-item-in-outfit= item.in_outfit, 
+								data-item-variety= item.varieties[0], 
+								data-item-id= item._id.toString().replace(/"/g, ""))
 
-mixin equipped-col(equipped)
+mixin equipped-col(outfit)
 	#equipped-col
 		#equipped
 			#equipped-inner
 				#equipped-items
+					- var equip_attrs_front = outfit.equip_attrs.front;
+					- var equip_attrs_back = outfit.equip_attrs.back;
 					ul
-						- for i, cat in equipped
-							li.equipped-layer( data-layer=cat )
-								span.header= cat
-								ul
-									- var equippedCat = equipped[cat]
-									- for (var j = equippedCat.length-1; j >= 0; j--)
-										- var item = equippedCat[j]
-										li.equipped-item( data-item-name= item.name, data-item-id= item._id.toString().replace(/"/g, "") )
+						li#equipped-layer-front.equipped-layer= "front"
+							ul
+								- for (var j = equip_attrs_front.length-1; j >= 0; j--)
+									mixin equipped-item(equip_attrs_front[j])
+						li#equipped-layer-back.equipped-layer= "back"
+							ul
+								- for (var k = equip_attrs_back.length-1; k >= 0; k--)
+									mixin equipped-item(equip_attrs_back[k])
+						
+
+mixin equipped-item(equipAttr)
+	li.equipped-item( data-item-name= equipAttr.item.name, data-item-id= equipAttr.item._id.toString().replace(/"/g, ""))
 
 block inner-content
 	#dressroom
@@ -39,4 +52,4 @@ block inner-content
 		#preview
 			#preview-inner
 				img#avatar-preview(src="/images/testout.png")
-		mixin equipped-col(character.equipped)
+		mixin equipped-col(character.outfit_wip)

@@ -1,3 +1,3 @@
 module.exports = {
-	DEFAULT_WARDROBE_CATEGORY: "hair"
+	DEFAULT_WARDROBE_CATEGORY: "base"
 };

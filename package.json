@@ -13,6 +13,8 @@
     "monk": "*",
     "mout": "*",
     "gm": "*",
-    "q" : "*"
+    "q" : "*",
+    "underscore" : "*",
+    "mongoskin" : "*"
   }
 }

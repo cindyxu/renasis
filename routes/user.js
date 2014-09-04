@@ -8,8 +8,8 @@ module.exports = function(utils) {
 
 	var db = utils.db;
 
-	var dbchars = db.get("characters");
-	var dbitems = db.get("items");
+	var dbChars = db.get("characters");
+	var dbItems = db.get("items");
 
 	var userHelper = {};
 
@@ -17,7 +17,7 @@ module.exports = function(utils) {
 
 	userExport.dressroom = function(req, res) {
 
-		dbchars.findOne({}, function(err, charObj) {
+		dbChars.findOne({}, function(err, charObj) {
 			res.redirect("/character/" + charObj._id + "/dressroom");
 		});
 	};
