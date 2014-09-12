@@ -14,32 +14,21 @@ h1 {
   box-sizing: border-box;
 }
 body {
-  font: 13px "Lucida Grande", Helvetica, Arial, sans-serif;
+  font: 16px "04b03", "Lucida Grande", Helvetica, Arial, sans-serif;
   background-color: #ecdcbf;
   color: #2f230e;
   min-width: 40rem;
+  -webkit-font-smoothing: none;
+}
+button,
+input {
+  font: 16px "04b03", "Lucida Grande", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: none;
 }
 body,
 html {
   height: 100%;
-}
-.quote-left {
-  background-color: #fff;
-  padding: 1rem;
-  border-bottom: 1px solid #d6a770;
-  -webkit-border-radius: 15px;
-  -moz-border-radius: 15px;
-  border-radius: 15px;
-  margin-left: 120px;
-}
-.quote-right {
-  background-color: #fff;
-  padding: 1rem;
-  border-bottom: 1px solid #d6a770;
-  -webkit-border-radius: 15px;
-  -moz-border-radius: 15px;
-  border-radius: 15px;
-  margin-right: 120px;
+  text-align: center;
 }
 .post:nth-of-type(2n+1) {
   background-color: rgba(255,255,255,0.2);
@@ -51,6 +40,30 @@ html {
 .quote-container .quote-links {
   text-align: right;
 }
+.quote-container .quote {
+  background-color: #fff;
+  padding: 1rem;
+  border-bottom: 1px solid #d6a770;
+  -webkit-border-radius: 15px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+  min-height: 100px;
+}
+.quote-container .avatar {
+  width: 120px;
+}
+.quote-container.left .quote {
+  margin-left: 120px;
+}
+.quote-container.left .avatar {
+  float: left;
+}
+.quote-container.right .quote {
+  margin-right: 120px;
+}
+.quote-container.right .avatar {
+  float: right;
+}
 .link-med {
   font-size: 1.5rem;
   font-family: 'Francois One', sans-serif;
@@ -61,6 +74,9 @@ html {
 }
 .desc {
   font-size: 0.8rem;
+}
+.field-group {
+  margin-bottom: 0.5rem;
 }
 a:link {
   text-decoration: none;
@@ -94,28 +110,59 @@ a:link {
   padding: 1rem 0;
   height: 100%;
 }
-#splash {
-  text-align: center;
-  height: 100%;
-  font-size: 1rem;
-  color: #fff;
-}
-#splash font,
-#splash #dummy-block {
-  height: 40%;
-  display: block;
-}
-#splash form#login {
+form#login {
   background-color: rgba(88,33,0,0.7);
   padding: 2rem 1rem;
   text-align: right;
   margin: 0 auto;
   display: inline-block;
 }
-#splash form#login input {
+form#login input {
   font-size: 1.5rem;
   margin-left: 1rem;
   color: #ffd700;
+}
+form#login #submit-login {
+  margin: 0;
+  color: #000;
+  font-size: 1.5rem;
+  border-width: 0;
+  background-color: #eeb090;
+  margin-top: 1rem;
+  width: 100%;
+}
+form#signup {
+  text-align: right;
+  display: inline-block;
+  margin: 0 auto;
+}
+form#signup button#submit-signup {
+  background-color: #aaebeb;
+  border-width: 0;
+}
+form#signup #character-outfit-creation > * {
+  vertical-align: top;
+}
+form#signup #character-outfit-creation #select-prev,
+form#signup #character-outfit-creation #select-next {
+  width: 1rem;
+  display: inline-block;
+}
+form#signup #character-outfit-creation button#prev-hair,
+form#signup #character-outfit-creation button#next-hair {
+  margin-top: 80px;
+}
+form#signup #character-outfit-creation button#prev-face,
+form#signup #character-outfit-creation button#next-face {
+  margin-top: 5px;
+}
+form#signup #character-outfit-creation button#prev-top,
+form#signup #character-outfit-creation button#next-top {
+  margin-top: 17px;
+}
+form#signup #character-outfit-creation button#prev-bottom,
+form#signup #character-outfit-creation button#next-bottom {
+  margin-top: 10px;
 }
 input {
   border-width: 0px;
@@ -173,35 +220,40 @@ ul {
   margin: 0;
 }
 #dressroom {
-  height: 100%;
-  min-width: 700px;
-  min-height: 300px;
   margin: 0 auto;
   text-align: center;
   position: relative;
+  display: inline-block;
+  background-color: #e0c798;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+  padding: 1rem;
+}
+#dressroom > * {
+  vertical-align: top;
 }
 #dressroom #wardrobe-col {
   display: inline-block;
-  width: 35%;
-  height: 100%;
+  min-width: 300px;
+}
+#dressroom #wardrobe-col > * {
+  width: 100%;
 }
 #dressroom #wardrobe-col #wardrobe {
-  width: 100%;
-  padding: 0 1rem;
+  padding: 0 0.5rem;
 }
 #dressroom #wardrobe-col #wardrobe #wardrobe-inner {
-  height: 100%;
   -webkit-border-radius: 10px;
   -moz-border-radius: 10px;
   border-radius: 10px;
   padding-top: 1.5rem;
-  position: relative;
 }
 #dressroom #wardrobe-col #wardrobe #wardrobe-inner ul#subcategory-tabs {
+  width: 100%;
   text-align: left;
   font-size: 1.5rem;
   z-index: 1;
-  width: 100%;
   display: inline-block;
 }
 #dressroom #wardrobe-col #wardrobe #wardrobe-inner ul#subcategory-tabs li {
@@ -216,7 +268,6 @@ ul {
   background-color: #d6a770;
 }
 #dressroom #wardrobe-col #wardrobe #wardrobe-inner #subcategory-items {
-  height: 100%;
   background-color: #fff;
   overflow-y: scroll;
   -webkit-border-radius: 0 0 10px 10px;
@@ -234,9 +285,6 @@ ul {
   display: inline-block;
   min-width: 200px;
 }
-#dressroom #equipped-col #equipped-inner {
-  height: 220px;
-}
 #dressroom #equipped-col #equipped-inner .equipped-layer {
   margin-bottom: 0.5rem;
 }
@@ -251,45 +299,45 @@ ul {
 }
 #dressroom #equipped-col #equipped-inner .equipped-layer ul {
   background-color: #fff;
-  border: 1px solid #e0c798;
 }
 #dressroom #equipped-col #equipped-inner .equipped-layer ul li {
-  padding: 0.1rem 0;
-  border-bottom: 1px solid #e0c798;
-  clear: both;
+  border-bottom: 1px solid #f3e9d7;
+  position: relative;
+  padding-top: 0.4rem;
 }
-#dressroom #equipped-col #equipped-inner .equipped-layer ul li .name {
-  display: inline-block;
+#dressroom #equipped-col #equipped-inner .equipped-layer ul li span {
+  color: #d6a770;
+  padding-left: 0.5rem;
 }
 #dressroom #equipped-col #equipped-inner .equipped-layer ul li .actions {
-  float: right;
+  position: absolute;
+  right: 0;
+  bottom: 0;
 }
 #dressroom #equipped-col #equipped-inner .equipped-layer ul li .actions button {
-  background-color: #d6a770;
+  background-color: #f3e9d7;
   border-width: 0;
-  height: 100%;
-  color: #fff;
-  -webkit-border-radius: 0.5rem;
-  -moz-border-radius: 0.5rem;
-  border-radius: 0.5rem;
+  margin: 0;
 }
 #dressroom #preview {
   display: inline-block;
   width: 130px;
-  height: 100%;
   padding: 0;
   margin: 0;
 }
 #dressroom #preview > * {
   display: inline-block;
-  width: 30%;
-  height: 100%;
-  overflow: scroll;
+  width: 100%;
+}
+#dressroom #preview #preview-actions {
+  height: 1.5rem;
+  background-color: #aaebeb;
+}
+#dressroom #preview #preview-actions button {
+  border-width: 0;
+  background-color: transparent;
 }
 #dressroom #preview #preview-inner {
-  -webkit-border-radius: 10px;
-  -moz-border-radius: 10px;
-  border-radius: 10px;
   background-color: #fff;
   width: 130px;
   height: 220px;

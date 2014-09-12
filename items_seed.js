@@ -107,7 +107,13 @@ db.item_blueprints.insert({
 	poses: {
 		"above_a" : { 
 			"0" : { 
-				"offset" : [17, 63] } } } });
+				"offset" : [23, 63] } },
+		"above_b" : { 
+			"0" : { 
+				"offset" : [20, 67] } },
+		"above_c" : { 
+			"0" : { 
+				"offset" : [17, 67] } } } });
 db.item_blueprints.insert({ 
 	category: "clothing", 
 	subcategory: "top", 
@@ -150,24 +156,29 @@ db.item_blueprints.insert({
 		"above_b" : { 
 			"0" : { 
 				"offset" : [18, 87] } } } });
+db.users.drop();
 db.characters.drop();
+/*
 db.characters.insert({ 
 	"name" : "Perplexi", 
-	"user_id" : db.users.findOne({ "username" : "god" })._id, 
-	"outfit_wip" : { 
-		"equip_attrs" : {
-			"front" : [],
-			"back" : []
-		}, 
-		"pose" : { 
-			"above_a" : "0",
-			"above_b" : "0",
-			"above_c" : "0",
-			"behind" : "0",
-			"back" : "0"
-		} 
-	} 
+	"outfits" : {
+		"wip" : { 
+			"layers" : {
+				"front" : [],
+				"back" : []
+			}, 
+			"pose" : { 
+				"above_a" : "0",
+				"above_b" : "0",
+				"above_c" : "0",
+				"behind" : "0",
+				"back" : "0"
+			} 
+		}
+	}
 });
+var perplexi = db.characters.findOne({ "name" : "Perplexi" });
+*/
 
 var item_blueprints = db.item_blueprints.find().toArray();
 db.items.drop();
@@ -187,4 +198,8 @@ for (var i = 0; i < item_blueprints.length; i++) {
 	items.push(item);
 }
 
-db.users.update({ "username" : "god" }, { "$set" : { "inventory" : items }});
+/*
+db.users.insert({ "username" : "god", "inventory" : items, "curr_character_id" : perplexi._id, "character_ids" : [perplexi._id] });
+var god = db.users.findOne({ "username" : "god" });
+db.characters.update({ "name" : "Perplexi" }, { "$set" : { "user_id" : god._id } });
+*/

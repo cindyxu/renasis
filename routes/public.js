@@ -14,6 +14,10 @@ module.exports.smprof = function(req, res){
 	res.render('smprof', { title: 'Express' });
 };
 
-module.exports.smsplash = function(req, res){
-	res.render('smsplash', { title: 'Express' });
+module.exports.login = function(req, res){
+	res.render('login', { title: 'Express' });
+};
+
+module.exports.signup = function(req, res){
+	res.render('signup', { title: 'Express' });
 };

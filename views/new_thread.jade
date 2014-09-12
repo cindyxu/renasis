@@ -1,0 +1,11 @@
+extends layout
+
+block inner-content
+	form#new-thread(method="post")
+		.field
+			label Title
+			input(name="title")
+		.field
+			label Post
+			textarea(name="post-message")
+		button#submit-thread Submit

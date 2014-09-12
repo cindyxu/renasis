@@ -1,5 +1,5 @@
 var updateAvatar = function(newPath) {
-	$("#avatar-preview").attr("src", newPath);
+	$("#outfit-preview").attr("src", newPath);
 };
 
 var inflateEquippedItemListings = function() {
@@ -47,13 +47,34 @@ var inflateEquippedItemListing = function(listing) {
 	
 	var actions = $("<div class=\"actions\">");
 
+	var shiftUpButton = $("<button>");
+	shiftUpButton.attr("data-item-id", itemId)
+		.attr("data-item-name", itemName)
+		.attr("data-direction", -1)
+		.addClass("shift")
+		.addClass("hover-pointer")
+		.addClass("equipped-item-action")
+		.html("&uarr;");
+
+	var shiftDownButton = $("<button>");
+	shiftDownButton.attr("data-item-id", itemId)
+		.attr("data-item-name", itemName)
+		.attr("data-direction", 1)
+		.addClass("shift")
+		.addClass("hover-pointer")
+		.addClass("equipped-item-action")
+		.html("&darr;");
+
 	var deequipButton = $("<button>");
 	deequipButton.attr("data-item-id", itemId)
 		.attr("data-item-name", itemName)
 		.addClass("deequip")
 		.addClass("hover-pointer")
+		.addClass("equipped-item-action")
 		.html("x");
-	
+
+	actions.append(shiftUpButton);
+	actions.append(shiftDownButton);
 	actions.append(deequipButton);
 	listing.append(actions);
 	
@@ -89,27 +110,75 @@ $(function() {
 			url: "/character/0/dressroom/get_wardrobe_subcategory_items/" + $(this).html(),
 			success: function(res) {
 				populateWardrobeItemListings(res.wardrobe);
+			},
+			error: function(err) {
+				console.log(err);
 			}
 		});
 	});
 
 	// user pressed "x" next to equipped item 
-	// -> remove from equipped list & update avatar
-	$("#equipped-col").on("click", "button.deequip", function(e) {
-		var itemName = $(this).attr("data-item-name");
-		var itemId = $(this).attr("data-item-id");
+	// -> remove from equipped list & update outfit
+	$("#equipped-col").on("click", "button.shift", function(e) {
+		var itemListing = $(this).closest(".equipped-item");
+		var itemName = itemListing.attr("data-item-name");
+		var itemId = itemListing.attr("data-item-id");
+		var direction = parseInt($(this).attr("data-direction"));
+
+		var idx = itemListing.index();
+		console.log(itemListing);
+		console.log(idx, direction);
+
+		var numListings = itemListing.parent().children("li.equipped-item").length;
+		if (direction === 1 && idx >= numListings - 1) return;
+		else if (direction === -1 && idx === 0) return;
+
+		var arrayDirection = -direction;
+
 		$.ajax({
 			type: "POST",
-			url: "/character/0/dressroom/toggle_equip_item",
-			data: { "item_id" : $(this).attr("data-item-id") },
+			url: "/character/0/dressroom/shift_equipped_item",
+			data: { "item_id" : $(this).attr("data-item-id"), "direction" : arrayDirection },
 			success: function(res) {
 				var d = new Date();
 				// refresh image
-				$("#avatar-preview").attr("src", "/images/testout.png?" + d.getTime());
+				$("#outfit-preview").attr("src", "/images/testout.png?" + d.getTime());
+				var swapListing = $("li.equipped-item[data-item-id='" + res.results.swapped_item_id + "']");
+				console.log(swapListing);
+				if (direction === 1) {
+					itemListing.before(swapListing);
+				}
+				else {
+					itemListing.after(swapListing);
+				}
+			},
+			error: function(err) {
+				console.log(err);
+			}
+		})
+	});
+
+	// user pressed "x" next to equipped item 
+	// -> remove from equipped list & update outfit
+	$("#equipped-col").on("click", "button.deequip", function(e) {
+		var itemListing = $(this).closest(".equipped-item");
+		var itemName = itemListing.attr("data-item-name");
+		var itemId = itemListing.attr("data-item-id");
+		$.ajax({
+			type: "POST",
+			url: "/character/0/dressroom/toggle_equip_item",
+			data: { "item_id" : itemListing.attr("data-item-id") },
+			success: function(res) {
+				var d = new Date();
+				// refresh image
+				$("#outfit-preview").attr("src", "/images/testout.png?" + d.getTime());
 				// delete self from equipped list
 				$("li.equipped-item[data-item-name=" + itemName + "]").remove();
 				// remove flag from wardrobe item
 				$(".wardrobe-item[data-item-id="+itemId+"]").removeAttr("data-item-in-outfit");
+			},
+			error: function(err) {
+				console.log(err);
 			}
 		})
 	});
@@ -123,7 +192,7 @@ $(function() {
 
 		var equipData = { "item_id": itemId };
 		if (isEquipping) {
-			equipData["equip_attrs"] = { "variety" : itemVariety };
+			equipData["equip_desc"] = { "variety" : itemVariety };
 		}
 
 		var wardrobeElement = $(this);
@@ -135,7 +204,7 @@ $(function() {
 				// TODO: check if item was successfully changed
 				//refresh iamge
 				var d = new Date();
-				$("#avatar-preview").attr("src", "/images/testout.png?" + d.getTime());
+				$("#outfit-preview").attr("src", "/images/testout.png?" + d.getTime());
 				if (isEquipping) {
 					$("#equipped-layer-" + res.results.equip_layer + " ul").prepend(createEquippedItemListing({ 
 						"id" : itemId, "name" : itemName, "variety" : itemVariety }));
@@ -154,4 +223,17 @@ $(function() {
 		});
 	});
 
+	$("#save-as-current").click(function(e) {
+		$.ajax({
+			type: "POST",
+			url: "/character/0/dressroom/copy_outfit",
+			data: { "src_outfit_name" : "wip", "dst_outfit_name" : "current" },
+			success: function(res) {
+
+			},
+			error: function(err) {
+				console.log(err);
+			}
+		})
+	});
 });

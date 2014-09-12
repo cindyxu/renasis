@@ -30,26 +30,32 @@ mixin equipped-col(outfit)
 		#equipped
 			#equipped-inner
 				#equipped-items
-					- var equip_attrs_front = outfit.equip_attrs.front;
-					- var equip_attrs_back = outfit.equip_attrs.back;
 					ul
-						li#equipped-layer-front.equipped-layer= "front"
-							ul
-								- for (var j = equip_attrs_front.length-1; j >= 0; j--)
-									mixin equipped-item(equip_attrs_front[j])
-						li#equipped-layer-back.equipped-layer= "back"
-							ul
-								- for (var k = equip_attrs_back.length-1; k >= 0; k--)
-									mixin equipped-item(equip_attrs_back[k])
+						mixin equipped-layer(outfit, "front")
+						mixin equipped-layer(outfit, "back")
 						
+mixin equipped-layer(outfit, layerName)
+	- var layer = outfit.layers[layerName];
+	li.equipped-layer( id = "equipped-layer-" + layerName )
+		p.header= layerName
+		ul
+			- if (layer.length > 0)
+				- for (var j = layer.length-1; j >= 0; j--)
+					mixin equipped-item(layer[j])
+			- else
+				li
+					span= "empty"
 
-mixin equipped-item(equipAttr)
-	li.equipped-item( data-item-name= equipAttr.item.name, data-item-id= equipAttr.item._id.toString().replace(/"/g, ""))
+
+mixin equipped-item(equipDesc)
+	li.equipped-item( data-item-name= equipDesc.item.name, data-item-id= equipDesc.item._id.toString().replace(/"/g, ""))
 
 block inner-content
 	#dressroom
 		mixin wardrobe-col()
 		#preview
+			#preview-actions
+				button#save-as-current= "save"
 			#preview-inner
-				img#avatar-preview(src="/images/testout.png")
-		mixin equipped-col(character.outfit_wip)
+				img#outfit-preview(src="/images/testout.png")
+		mixin equipped-col(character.outfits["wip"])

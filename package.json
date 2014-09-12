@@ -15,6 +15,7 @@
     "gm": "*",
     "q" : "*",
     "underscore" : "*",
-    "mongoskin" : "*"
+    "mongoskin" : "*",
+    "bcrypt" : "*"
   }
 }

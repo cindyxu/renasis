@@ -1,0 +1,49 @@
+extends layout
+
+mixin thread(thread)
+	.title
+		a.thread-link(href="fake")= thread.title
+		.pages
+			- for (var i = 0; i < Math.min(thread.page_count, 3); i++)
+				a(href="fake") #{i}
+				span , 
+			span ...
+			a(href="fake")= thread.page_count-1
+	.creator
+		span= thread.creator_name
+	.last-reply
+		span= thread.last_poster_name
+	.stats
+		p 500 views
+		p= thread.post_count + " replies"
+
+block inner-content
+	#forum-bar
+		#forum-title
+			p#forum-name= subforum
+			p#forum-desc Discuss everything related to your dog.
+		#forum-actions
+			a#last-page(href='fake') <
+			a#next-page(href='fake') >
+			a#new-thread(href='new') +
+	#thread-list
+		ul
+			li.thread-row.header
+				.title
+					span Thread title
+				.creator
+					span Created by
+				.last-reply
+					span Last reply
+				.stats
+					span Stats
+			//
+				- for (var i = 0; i < 3; i++)
+					li.thread-row.stickied
+						mixin thread('')
+				- for (var i = 0; i < 5; i++)
+					li.thread-row.unread
+						mixin thread('')
+			- for (var i = 0; i < threads.length; i++)
+				li.thread-row
+					mixin thread(threads[i])

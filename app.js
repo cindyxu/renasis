@@ -15,12 +15,14 @@ var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/renasistest');
 
+var bcrypt = require('bcrypt');
+
 var fs = require('fs');
 var gm = require('gm');
 var mout = require('mout');
 var Q = require('q');
-var _ = require('underscore');
 
+var _ = require('underscore');
 _.mixin({
 	findIndex : function(obj, iterator, context) {
 		var idx;
@@ -34,13 +36,29 @@ _.mixin({
 	}
 });
 
-var utils = { "db" : db, "mout" : mout, "gm" : gm, "fs" : fs, "Q" : Q, "_" : _ };
-utils.itemHelper = require('./routes/helpers/item')(utils);
-utils.charHelper = require('./routes/helpers/character')(utils);
+var utils = { 
+	"db" : db, 
+	"mout" : mout, 
+	"gm" : gm, 
+	"fs" : fs, 
+	"Q" : Q, 
+	"_" : _, 
+	"bcrypt" : bcrypt };
+
 utils.constants = require('./routes/helpers/constants');
+// nondependents
+utils.creationHelper = require('./routes/helpers/creation')(utils);
+
+// possibly dependents
+utils.userHelper = require('./routes/helpers/user')(utils);
+utils.itemHelper = require('./routes/helpers/item')(utils);
+utils.creationHelper = require('./routes/helpers/creation')(utils);
+utils.wardrobeHelper = require('./routes/helpers/wardrobe')(utils);
+
 
 var character = require('./routes/character')(utils);
 var user = require('./routes/user')(utils);
+var forum = require('./routes/forum')(utils);
 var app = express();
 
 // all environments
@@ -53,9 +71,11 @@ app.use(express.logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(express.methodOverride());
-app.use(app.router);
 app.use(require('stylus').middleware(__dirname + '/public'));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.cookieParser());
+app.use(express.session({ secret: 'ilovebigducks342' }));
+app.use(app.router);
 
 // development only
 if ('development' == app.get('env')) {
@@ -66,13 +86,23 @@ app.get('/', routes.index);
 
 app.get('/smforum', public.smforum);
 app.get('/smthread', public.smthread);
-app.get('/smsplash', public.smsplash);
 app.get('/smforumthreads', public.smforumthreads);
 
-app.get('/dressroom', user.dressroom);
-app.get('/character/:char_id/dressroom', character.dressroom);
-app.get('/character/:char_id/dressroom/get_wardrobe_subcategory_items/:subcategory', character.getWardrobeSubcategoryItems);
-app.post('/character/:char_id/dressroom/toggle_equip_item', character.toggleEquipItem);
+app.get('/login', public.login);
+app.get('/signup', public.signup);
+app.post('/login', user.login);
+app.post('/signup', user.signup);
+
+app.get("/forums/:subforum", forum.showSubforum);
+app.get("/forums/:subforum/new", forum.newThread);
+app.post("/forums/:subforum/new", forum.createThread);
+app.get("/forums/:subforum/:thread_id", forum.showThread);
+
+app.get('/dressroom', character.dressroom);
+app.get('/dressroom/get_wardrobe_subcategory_items/:subcategory', character.getWardrobeSubcategoryItems);
+app.post('/dressroom/toggle_equip_item', character.toggleEquipItem);
+app.post('/dressroom/shift_equipped_item', character.shiftEquippedItem);
+app.post('/dressroom/copy_outfit', character.copyOutfit);
 app.get('/:what', routes.index);
 
 http.createServer(app).listen(app.get('port'), function(){
