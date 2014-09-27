@@ -65,7 +65,7 @@ utils.creationHelper = require('./routes/helpers/creation')(utils);
 utils.wardrobeHelper = require('./routes/helpers/wardrobe')(utils);
 
 
-var character = require('./routes/character')(utils);
+var wardrobe = require('./routes/wardrobe')(utils);
 var user = require('./routes/user')(utils);
 var forum = require('./routes/forum')(utils);
 var app = express();
