@@ -107,7 +107,7 @@ $(function() {
 	$("#subcategory-tabs li").click(function(e) {
 		$.ajax({
 			type: "GET",
-			url: "/character/0/dressroom/get_wardrobe_subcategory_items/" + $(this).html(),
+			url: "/dressroom/get_wardrobe_subcategory_items/" + $(this).html(),
 			success: function(res) {
 				populateWardrobeItemListings(res.wardrobe);
 			},
@@ -137,7 +137,7 @@ $(function() {
 
 		$.ajax({
 			type: "POST",
-			url: "/character/0/dressroom/shift_equipped_item",
+			url: "/dressroom/shift_equipped_item",
 			data: { "item_id" : $(this).attr("data-item-id"), "direction" : arrayDirection },
 			success: function(res) {
 				var d = new Date();
@@ -166,7 +166,7 @@ $(function() {
 		var itemId = itemListing.attr("data-item-id");
 		$.ajax({
 			type: "POST",
-			url: "/character/0/dressroom/toggle_equip_item",
+			url: "/dressroom/toggle_equip_item",
 			data: { "item_id" : itemListing.attr("data-item-id") },
 			success: function(res) {
 				var d = new Date();
@@ -198,7 +198,7 @@ $(function() {
 		var wardrobeElement = $(this);
 		$.ajax({
 			type: "POST",
-			url: "/character/0/dressroom/toggle_equip_item",
+			url: "/dressroom/toggle_equip_item",
 			data: equipData,
 			success: function(res) {
 				// TODO: check if item was successfully changed
@@ -226,7 +226,7 @@ $(function() {
 	$("#save-as-current").click(function(e) {
 		$.ajax({
 			type: "POST",
-			url: "/character/0/dressroom/copy_outfit",
+			url: "/dressroom/copy_outfit",
 			data: { "src_outfit_name" : "wip", "dst_outfit_name" : "current" },
 			success: function(res) {
 

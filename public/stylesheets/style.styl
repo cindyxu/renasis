@@ -17,8 +17,9 @@ $aqua = #aaebeb
 
 $avatar-width = 120px
 $avatar-height = 200px
-$nav-bar-width = 100px
+$nav-bar-width = 140px
 $std-margin-side = 2rem
+$header-bar-height = 4rem
 
 $preview-width = 130px
 $preview-height = 220px
@@ -38,12 +39,15 @@ box-shadow(args...)
 	-moz-box-shadow args
 	box-shadow args
 
-quote()
+post()
 	background-color: white
 	padding: 1rem
 	border-bottom: 1px solid $cocoa
 	border-radius 15px
 	min-height: 100px
+	font-size: 12px
+	img.post-emote
+		margin: 0 2px
 
 smalltab()
 	display: inline-block
@@ -63,11 +67,11 @@ h1
 	box-sizing: border-box
 
 body
-	font: 16px "04b03", "Lucida Grande", Helvetica, Arial, sans-serif
+	font: 14px "Lucida Grande", sans-serif
 	background-color: $tan
+	background: url("/images/background.png")
 	color: $dark-brown
 	min-width: 40rem
-	-webkit-font-smoothing: none
 
 button, input
 	font: 16px "04b03", "Lucida Grande", Helvetica, Arial, sans-serif
@@ -77,31 +81,59 @@ body, html
 	height: 100%
 	text-align: center
 
-.post
-	&:nth-of-type(2n+1)
-		background-color: rgba(255,255,255,0.2)
-
-.quote-container
+.post-container
 	display: block
+	position: relative
 	padding: 2rem
-	.quote-links
+	min-height: $avatar-height
+	.post-links
 		text-align: right
-	.quote
-		quote()
+	.post
+		post()
 	.avatar
 		width: $avatar-width
+		height: $avatar-height
+		position: absolute
+		top: 0
 
 	&.left
-		.quote
+		background-color: rgba(255,255,255,0.2)
+		.post
 			margin-left: $avatar-width
+			margin-right: 1rem
 		.avatar
-			float: left
+			left: 2rem
 
 	&.right
-		.quote
+		.post
 			margin-right: $avatar-width
+			margin-left: 1rem
 		.avatar
-			float: right
+			right: 2rem
+
+#post-emotes
+	a
+		margin: 0 2px
+		img
+			position: relative
+			&:hover
+				bottom: 2px
+
+form#new-post-form
+	textarea#new-post-message
+		width: 100%
+		min-height: 10rem
+		border-width: 0
+		border-top: 1px solid $dim-tan
+		border-left: 1px solid $tan
+		border-right: 1px solid $tan
+		border-radius 15px
+		padding: 15px
+		outline: 0
+		font-size: 12px
+		font-family: "Ayuthaya"
+	#new-post-preview
+		display: none
 
 .link-med
 	font-size: 1.5rem
@@ -130,23 +162,39 @@ a:link
 	height: 100%
 	position: fixed
 	left: 0
-	text-align: center
+	text-align: left
 	background-color: $dark-brown
 	z-index: 999
 	.nav-item
+		display: block
+		margin-left: 1rem
 		a
 			color: $pale-tan
 			display: block
 			width: 100%
 			height: 100%
 			padding: 0.5rem 0
-			
-		display: block
+
+#header-bar
+	overflow: auto
+	background-color: white
+	display: block
+	position: fixed
+	width: 100%
+	padding-left: $nav-bar-width
+	height: $header-bar-height
+	z-index: 998
+
+#right-column
+	height: 100%
+	overflow-y: hidden
+	> *
+		padding-left: $nav-bar-width
 
 #inner-content
-	margin-left: $nav-bar-width
-	padding: 1rem 0
 	height: 100%
+	padding-top: $header-bar-height
+	overflow-y: scroll
 
 form#login
 	background-color: rgba($deep-brown,0.7)
@@ -228,6 +276,19 @@ input
 		.stats
 			width: 19%
 			font-size: 0.7rem
+
+#thread-bar
+	padding: 0.5rem
+	#thread-desc
+		float: left
+		font-size: 2rem
+		font-family: 'Francois One', sans-serif
+		text-shadow: 0 1px $cocoa
+	#thread-actions
+		float: right
+		a
+			padding: 0.5rem 0.5rem
+			display: inline-block
 
 ul
 	list-style-type: none
@@ -323,14 +384,10 @@ ul
 			overflow: hidden
 
 #forum-bar
-	display: block
-	background-color: white
-	overflow: auto
-	width: 100%
 	padding: 0 $std-margin-side
 	padding-bottom: 1rem
 
-	#forum-title
+	#forum-desc
 		display: inline
 		float: left
 		#forum-name

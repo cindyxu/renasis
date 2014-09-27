@@ -2,6 +2,7 @@ module.exports = function(utils) {
 
 	var db = utils.db;
 	var Q = utils.Q;
+	var _ = utils._;
 
 	var dbItems = db.get("items");
 	var dbItemBlueprints = db.get("item_blueprints");
@@ -9,7 +10,7 @@ module.exports = function(utils) {
 
 	// pass in an array of item ids - will populate store with item objects
 	itemHelper.fetchItemObjsPromises = function(itemIds, store) {
-		return itemIds.map(function(itemId, j) {
+		return _.map(itemIds, function(itemId, j) {
 			return itemHelper.fetchItemObjPromise(itemId, store, j);
 		});
 	};

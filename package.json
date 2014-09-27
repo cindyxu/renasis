@@ -16,6 +16,7 @@
     "q" : "*",
     "underscore" : "*",
     "mongoskin" : "*",
-    "bcrypt" : "*"
+    "bcrypt" : "*",
+    "sqlite3" : "*"
   }
 }

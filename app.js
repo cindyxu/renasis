@@ -15,12 +15,20 @@ var mongo = require('mongodb');
 var monk = require('monk');
 var db = monk('localhost:27017/renasistest');
 
+var sqlite3 = require('sqlite3').verbose();
+var sqlitedb = new sqlite3.Database("sqldata/renasistest");
+var dbTasks = require('./tasks')(sqlitedb);
+sqlitedb.serialize(function() {
+	dbTasks.recreateTables();
+})
+
 var bcrypt = require('bcrypt');
 
 var fs = require('fs');
 var gm = require('gm');
 var mout = require('mout');
 var Q = require('q');
+var crypto = require('crypto');
 
 var _ = require('underscore');
 _.mixin({
@@ -43,7 +51,8 @@ var utils = {
 	"fs" : fs, 
 	"Q" : Q, 
 	"_" : _, 
-	"bcrypt" : bcrypt };
+	"bcrypt" : bcrypt,
+	"crypto" : crypto };
 
 utils.constants = require('./routes/helpers/constants');
 // nondependents
@@ -92,17 +101,20 @@ app.get('/login', public.login);
 app.get('/signup', public.signup);
 app.post('/login', user.login);
 app.post('/signup', user.signup);
+app.get('/new_character', user.newCharacter);
+app.post('/new_character', user.createCharacter);
 
 app.get("/forums/:subforum", forum.showSubforum);
 app.get("/forums/:subforum/new", forum.newThread);
 app.post("/forums/:subforum/new", forum.createThread);
 app.get("/forums/:subforum/:thread_id", forum.showThread);
+app.post("/forums/:subforum/:thread_id", forum.createPost);
 
-app.get('/dressroom', character.dressroom);
-app.get('/dressroom/get_wardrobe_subcategory_items/:subcategory', character.getWardrobeSubcategoryItems);
-app.post('/dressroom/toggle_equip_item', character.toggleEquipItem);
-app.post('/dressroom/shift_equipped_item', character.shiftEquippedItem);
-app.post('/dressroom/copy_outfit', character.copyOutfit);
+app.get('/dressroom', wardrobe.dressroom);
+app.get('/dressroom/get_wardrobe_subcategory_items/:subcategory', wardrobe.getWardrobeSubcategoryItems);
+app.post('/dressroom/toggle_equip_item', wardrobe.toggleEquipItem);
+app.post('/dressroom/shift_equipped_item', wardrobe.shiftEquippedItem);
+app.post('/dressroom/copy_outfit', wardrobe.copyOutfit);
 app.get('/:what', routes.index);
 
 http.createServer(app).listen(app.get('port'), function(){

@@ -2,7 +2,7 @@ extends layout
 
 mixin thread(thread)
 	.title
-		a.thread-link(href="fake")= thread.title
+		a.thread-link(href=subforum + "/" + thread._id)= thread.title
 		.pages
 			- for (var i = 0; i < Math.min(thread.page_count, 3); i++)
 				a(href="fake") #{i}
@@ -17,15 +17,16 @@ mixin thread(thread)
 		p 500 views
 		p= thread.post_count + " replies"
 
+block header-bar
+	#forum-desc
+		p#forum-name= subforum
+		p#forum-desc Discuss everything related to your dog.
+	#forum-actions
+		a#last-page(href='fake') <
+		a#next-page(href='fake') >
+		a#new-thread(href=subforum+'/new') +
+
 block inner-content
-	#forum-bar
-		#forum-title
-			p#forum-name= subforum
-			p#forum-desc Discuss everything related to your dog.
-		#forum-actions
-			a#last-page(href='fake') <
-			a#next-page(href='fake') >
-			a#new-thread(href='new') +
 	#thread-list
 		ul
 			li.thread-row.header

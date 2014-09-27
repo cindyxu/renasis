@@ -15,7 +15,7 @@ module.exports = function(utils) {
 	};
 
 	var THREADS_PER_PAGE = 15;
-
+	var POSTS_PER_THREAD = 15;
 	var forumExport = {};
 
 	forumExport.newThread = function(req, res) {
@@ -28,6 +28,9 @@ module.exports = function(utils) {
 	forumExport.createThread = function(req, res) {
 		userHelper.authenticate(req, res, function(userObj) {
 			if (!userObj) return;
+			if (!userObj.curr_character) {
+				res.redirect("new_character");
+			}
 
 			var subforum = req.params.subforum;
 			var title = req.body.title;
@@ -46,22 +49,30 @@ module.exports = function(utils) {
 		});
 	};
 
-	forumExport.getThreadPosts = function(threadId, firstThreadIdx, callback) {
+	forumExport.getThreadWithPosts = function(threadId, firstThreadIdx, callback) {
+		// get all posts on this page
 		dbThreads.col.aggregate(
 			{ "$match" : { "_id" : dbThreads.id(threadId) }},
 			{ "$unwind" : "$posts" },
 			{ "$skip" : firstThreadIdx },
 			{ "$limit" : THREADS_PER_PAGE },
 		function(err, postsContainer) {
+			// search for characters who posted. this might be excessive ...
+			// TODO: since character IDs are permanent, if we can relent on 
+			// character name changes, it should be fine to just store it
 			var posts = _.pluck(postsContainer, "posts");
 			var posterIds = _.pluck(posts, "poster_id");
+			var thread = postsContainer[0];
+			delete thread.posts;
 			dbUsers.find({ "_id" : { "$in" : posterIds }}, { "sort" : { "_id" : 1 }}, function(err, userObjs) {
+				// assign each user to its post
 				for (var i in posts) {
 					var post = posts[i];
 					var posterIdStr = post.poster_id.toString();
 					post.user = _.find(userObjs, function(u) { return u._id.toString() === posterIdStr; });
 				}
-				callback(err, posts);
+				thread.posts = posts;
+				callback(err, thread);
 			});
 		});	
 	}
@@ -69,11 +80,14 @@ module.exports = function(utils) {
 	forumExport.newPost = function(req, res, threadId) {
 		userHelper.authenticate(req, res, function(userObj) {
 			if (!userObj) return;
-
+			if (!userObj.curr_character) {
+				res.redirect("new_character");
+				return;
+			}
 			var message = req.body["post-message"];
 			threadId = threadId || req.body.thread_id;
 			var currPage = req.body.page || 1;
-			var firstThreadIdx = Math.floor(((currPage-1) * THREADS_PER_PAGE + 1) / THREADS_PER_PAGE);
+			var firstThreadIdx = Math.floor(((currPage-1) * POSTS_PER_THREAD + 1) / POSTS_PER_THREAD);
 			var postObj = {
 				"message" : message,
 				"poster_id" : userObj.curr_character._id,
@@ -87,8 +101,8 @@ module.exports = function(utils) {
 					"last_poster_id" : userObj.curr_character._id, 
 					"last_poster_name" : userObj.curr_character.name }
 			}, function(err, docs) {
-				forumExport.getThreadPosts(threadId, firstThreadIdx, function(err, posts) {
-					res.render("thread", { "posts" : posts });
+				forumExport.getThreadWithPosts(threadId, firstThreadIdx, function(err, thread) {
+					res.render("thread", { "thread" : thread });
 				});
 			});
 		});
@@ -104,20 +118,35 @@ module.exports = function(utils) {
 			"fields" : { "posts" : 0 }}, 
 			function(err, threads) {
 				for (var i in threads) {
-					threads[i].page_count = Math.ceil(threads[i].post_count / 15);
+					threads[i].page_count = Math.ceil(threads[i].post_count / POSTS_PER_THREAD);
 				}
 				res.render("subforum", { "threads" : threads, "subforum" : subforum });
-		});
+			}
+		);
 	};
 
 	forumExport.showThread = function(req, res) {
 		var subforum = req.params.subforum;
 		var threadId = req.params.thread_id;
 		var page = req.body.page || 1;
-		forumExport.getThreadPosts(threadId, (page-1) * 15, function(err, posts) {
-			res.render("thread", { "posts" : posts });
+		forumExport.getThreadWithPosts(threadId, (page-1) * POSTS_PER_THREAD, function(err, thread) {
+			res.render("thread", { "thread" : thread });
 		});
 	};
+
+	forumExport.createThread = function(req, res) {
+		userHelper.authenticate(req, res, function(userObj) {
+			if (!userObj) return;
+			if (!userObj.curr_character) {
+				res.redirect("new_character");
+				return;
+			}
+		});
+	}
+
+	forumExport.createPost = function(req, res) {
+		res.render("");
+	}
 
 	return forumExport;
 }

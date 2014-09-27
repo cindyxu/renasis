@@ -23,8 +23,8 @@ module.exports = function(utils) {
 
 			dbUsers.findOne({ "username" : username }, function(err, userObj) {
 				if (!userObj) {
-					console.log("FAIL");
-					res.send({});
+					res.render("login");
+					return;
 				}
 				bcrypt.compare(password, userObj.password_hash, function(err, passed) {
 					if (passed) {
@@ -39,8 +39,7 @@ module.exports = function(utils) {
 						}
 					}
 					else {
-						console.log("FAIL");
-						res.send({});
+						res.render("login");
 					}
 				});
 			});
@@ -50,9 +49,8 @@ module.exports = function(utils) {
 			var username = req.body.username;
 			var password = req.body.password;
 			var confirmPassword = req.body.confirm;
-			var charName = req.body["character-name"];
 
-			var errors = userHelper.userSignupErrors(username, password, confirmPassword, charName);
+			var errors = userHelper.userSignupErrors(username, password, confirmPassword);
 			if (errors.length > 0) {
 				console.log(errors);
 				res.render("signup", { "signup_errors" : errors });
@@ -60,15 +58,29 @@ module.exports = function(utils) {
 			}
 
 			userHelper.createUser(username, password, function(err, newUserObj) {
-				if (newUserObj.character_ids.length === 0) {
-					userHelper.createCharacterForUser(charName, newUserObj, function(err) {
-						req.session.user_id = newUserObj._id;
-						res.redirect("dressroom");
-					});
-				}
-				else {
+				if (!newUserObj) {
 					res.render("signup", { "signup_errors" : [ "Username already taken." ] });
 				}
+				res.redirect("new_character");
+			});
+		},
+
+		newCharacter: function(req, res) {
+			userHelper.authenticate(req, res, function(userObj) {
+				if (!userObj) return;
+				res.render("new_character");
+			});
+		},
+
+		createCharacter: function(req, res) {
+			userHelper.authenticate(req, res, function(userObj) {
+				if (!userObj) return;
+
+				var charName = req.body["character-name"];
+				userHelper.createCharacterForUser(charName, newUserObj, function(err) {
+					req.session.user_id = newUserObj._id;
+					res.redirect("dressroom");
+				});
 			});
 		}
 	};

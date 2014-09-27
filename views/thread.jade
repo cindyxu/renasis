@@ -1,25 +1,37 @@
 extends layout
 
 mixin post(postObj, lr)
-	.quote-container(class=lr)
+	.post-container(class=lr)
 		- if (lr === "left")
 			.avatar
 				img(src="/images/testout.png")
-		.quote-links
+		.post-links
 			a(href="fake")
 				img(src='images/bunny.png')
 			a(href="fake")
 				img(src='images/bunny.png')
 			a(href="fake")
 				img(src='images/bunny.png')
-		div.quote
+		div.post
 			p= postObj.message
 		- if (lr === "right")
 			.avatar
 				img(src="/images/testout.png")
 
+block append links
+	script(src="/javascripts/xbbcode.js")
+	script(src="/javascripts/thread.js")
+
+block header-bar
+	#thread-bar
+		#thread-desc
+			= thread.title
+		#thread-actions
+			a#new-post(href=subforum+"/new") Post
+			a Like
+			a Report
+
 block inner-content
-	- for (var i = 0; i < posts.length; i++)
-		.post
-			- var lr = (i%2 === 0 ? "left" : "right");
-			mixin post(posts[i], lr)
+	- for (var i = 0; i < thread.posts.length; i++)
+		- var lr = (i%2 === 0 ? "left" : "right");
+		mixin post(thread.posts[i], lr)

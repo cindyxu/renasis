@@ -29,14 +29,16 @@ module.exports = function(utils) {
 			var itemObj = itemObjsSorted[i];
 			itemObj.in_outfit = false;
 			
-			if (j < outfitItemIdsSorted.length) {
-				var outfitItemId = outfitItemIdsSorted[j];
-				if (itemObj.item_id >= outfitItemId) {
-					if (itemObj.item_id === outfitItemId) {
-						itemObj.in_outfit = true;
-					}
-					j++;
+			if (j >= outfitItemIdsSorted.length) break;
+
+			var outfitItemId = outfitItemIdsSorted[j];
+			console.log(itemObj._id, outfitItemId);
+			if (itemObj._id >= outfitItemId) {
+				if (itemObj._id.toString() === outfitItemId.toString()) {
+					console.log("FOUND " + itemObj.name);
+					itemObj.in_outfit = true;
 				}
+				j++;
 			}
 		}
 	};
@@ -56,6 +58,7 @@ module.exports = function(utils) {
 	};
 
 	wardrobeHelper.fetchOutfitItemObjs = function(outfit, callback) {
+		// TOOD: don't do this ... just make one database call and get them at once
 		var itemIdsFront = _.pluck(outfit.layers.front, "item_id");
 		Q.all(itemHelper.fetchItemObjsPromises(itemIdsFront, outfit.layers.front)).then(function() {
 			var itemIdsBack = _.pluck(outfit.layers.back, "item_id");
@@ -101,19 +104,19 @@ module.exports = function(utils) {
 					"public", 
 					"images",
 					"items",
+					"clothing",
 					itemObj.subcategory,
 					mout.string.underscore(itemObj.name), 
 					equipDesc.variety,
 					group,
 					poseName);
 				buf = buf.in(itemImgPath + "_inner.png").in("-geometry", geometryArg).in("-compose", "over").in("-composite");
-				buf = buf.in(itemImgPath + "_outline.png").in("-geometry", geometryArg).in("-compose", "darken").in("-composite");
+				buf = buf.in(itemImgPath + "_outline.png").in("-geometry", geometryArg).in("-compose", "multiply").in("-composite");
 			}
 		};
 
-		im()
 		// transparent + base
-		var buf = im(60, 100, "#ffffff00");
+		var buf = im(60, 100, "#ffffff00").in("-alpha", "Set");
 		// put item on
 		var layerBack = layers.back;
 		var layerFront = layers.front;
@@ -171,8 +174,8 @@ module.exports = function(utils) {
 		var opts = { "new" : true };
 		var updateSet = {};
 
-		// TODO: prevent duplicate adds, since getting itemIndex is not atomic
-		// nevermind ... ?
+		// TODO: maybe in the future, prevent duplicate adds ...
+		// TODO: verify that newEquipDesc is valid
 
 		// if not already equipped, add new object in outfit
 		if (itemIndex === undefined) {
@@ -202,7 +205,6 @@ module.exports = function(utils) {
 	};
 
 	wardrobeHelper.shiftItemInOutfit = function(charObj, itemObj, outfitName, direction, callback) {
-		console.log("hi");
 		var outfit = charObj.outfits[outfitName];
 		var itemId = itemObj._id;
 		
@@ -235,7 +237,6 @@ module.exports = function(utils) {
 		var updateSet = {};
 		var updateKey = "outfits." + outfitName + ".layers." + layerName;
 		updateSet[updateKey] = layers[layerName];
-		console.log(JSON.stringify(updateSet));
 		dbChars.findAndModify(query, { "$set" : updateSet }, opts, function(err, charObjNew) {
 			if (err) { console.log(err); }
 			else {

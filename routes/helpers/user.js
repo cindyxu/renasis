@@ -3,6 +3,7 @@ module.exports = function(utils) {
 
 	var constants = utils.constants;
 	var bcrypt = utils.bcrypt;
+	var crypto = utils.crypto;
 	var db = utils.db;
 	var dbUsers = db.get("users");
 	var dbChars = db.get("characters");
@@ -26,7 +27,7 @@ module.exports = function(utils) {
 		}
 	};
 
-	userHelper.userSignupErrors = function(username, password, confirmPassword, charName) {
+	userHelper.userSignupErrors = function(username, password, confirmPassword) {
 		var errors = [];
 		if (!username) {
 			errors.push("Username cannot be blank");
@@ -37,11 +38,33 @@ module.exports = function(utils) {
 		if (confirmPassword !== password) {
 			errors.push("Password and confirmation did not match");
 		}
-		if (!charName) {
-			errors.push("Character name cannot be blank");
-		}
 		console.log(errors);
 		return errors;
+	};
+
+	userHelper.createUser = function(username, password, callback) {
+		bcrypt.hash(password, constants.PASSWORD_SALT_ROUNDS, function(err, hash) {
+			// TODO: get writeresults somehow because this is stupid
+			// basically we are making sure that the userObj returned
+			// is the one we tried to create - and we are checking
+			// by assigning it a creation id
+			var creation_id = crypto.randomBytes(20).toString('hex');
+			dbUsers.findAndModify({ "username" : username },
+				{ "$setOnInsert" : { 
+					"creation_id" : creation_id,
+					"password_hash" : hash, 
+					"inventory" : [], 
+					"character_ids" : [] }},
+				{ "new": true, "upsert": true },
+				function(err, newUserObj) {
+					if (newUserObj && (newUserObj.creation_id !== creation_id)) {
+						callback();
+					}
+					else {
+						callback(err, newUserObj);
+					}
+				});
+		});
 	};
 
 	userHelper.createCharacterForUser = function(charName, userObj, callback) {
@@ -62,18 +85,6 @@ module.exports = function(utils) {
 				{ "new" : true }, 
 				callback
 			);
-		});
-	};
-
-	userHelper.createUser = function(username, password, callback) {
-		bcrypt.hash(password, constants.PASSWORD_SALT_ROUNDS, function(err, hash) {
-			dbUsers.findAndModify({ "username" : username },
-				{ "$setOnInsert" : { 
-					"password_hash" : hash, 
-					"inventory" : [], 
-					"character_ids" : [] }},
-				{ "new": true, "upsert": true },
-				callback);
 		});
 	};
 
