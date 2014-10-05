@@ -17,6 +17,7 @@
     "underscore" : "*",
     "mongoskin" : "*",
     "bcrypt" : "*",
-    "sqlite3" : "*"
+    "sqlite3" : "*",
+    "debug" : "*"
   }
 }

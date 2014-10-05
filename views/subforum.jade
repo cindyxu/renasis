@@ -19,7 +19,7 @@ mixin thread(thread)
 
 block header-bar
 	#forum-desc
-		p#forum-name= subforum
+		p#forum-name= subforum.subforum_alias
 		p#forum-desc Discuss everything related to your dog.
 	#forum-actions
 		a#last-page(href='fake') <
@@ -27,24 +27,28 @@ block header-bar
 		a#new-thread(href=subforum+'/new') +
 
 block inner-content
-	#thread-list
-		ul
-			li.thread-row.header
-				.title
-					span Thread title
-				.creator
-					span Created by
-				.last-reply
-					span Last reply
-				.stats
-					span Stats
-			//
-				- for (var i = 0; i < 3; i++)
-					li.thread-row.stickied
-						mixin thread('')
-				- for (var i = 0; i < 5; i++)
-					li.thread-row.unread
-						mixin thread('')
-			- for (var i = 0; i < threads.length; i++)
-				li.thread-row
-					mixin thread(threads[i])
+	- if (subforum)
+		#thread-list
+			ul
+				li.thread-row.header
+					.title
+						span Thread title
+					.creator
+						span Created by
+					.last-reply
+						span Last reply
+					.stats
+						span Stats
+				//
+					- for (var i = 0; i < 3; i++)
+						li.thread-row.stickied
+							mixin thread('')
+					- for (var i = 0; i < 5; i++)
+						li.thread-row.unread
+							mixin thread('')
+				- var threads = subforum.threads || [];
+				- for (var i = 0; i < threads.length; i++)
+					li.thread-row
+						mixin thread(threads[i])
+	- else
+		p Subforum doesn't exist!

@@ -1,9 +1,6 @@
-
 /*
  * GET users listing.
  */
-
-
 module.exports = function(utils) {
 
 	var db = utils.db;
@@ -21,14 +18,15 @@ module.exports = function(utils) {
 			var username = req.body.username;
 			var password = req.body.password;
 
-			dbUsers.findOne({ "username" : username }, function(err, userObj) {
+			userHelper.findByUsername(username, function(err, userObj) {
 				if (!userObj) {
+					debug.log("User not found");
 					res.render("login");
 					return;
 				}
 				bcrypt.compare(password, userObj.password_hash, function(err, passed) {
 					if (passed) {
-						req.session.user_id = userObj._id;
+						req.session.user_id = userObj.user_id;
 						if (req.session.redirect_to) {
 							var redirectTo = req.session.redirect_to;
 							delete req.session.redirect_to;
@@ -39,6 +37,7 @@ module.exports = function(utils) {
 						}
 					}
 					else {
+						debug.log("Bad password");
 						res.render("login");
 					}
 				});
@@ -52,16 +51,19 @@ module.exports = function(utils) {
 
 			var errors = userHelper.userSignupErrors(username, password, confirmPassword);
 			if (errors.length > 0) {
-				console.log(errors);
 				res.render("signup", { "signup_errors" : errors });
 				return;
 			}
-
-			userHelper.createUser(username, password, function(err, newUserObj) {
-				if (!newUserObj) {
+			userHelper.createUser(username, password, function(err) {
+				if (err) {
+					console.log(err);
+					//HMMMM ...
 					res.render("signup", { "signup_errors" : [ "Username already taken." ] });
 				}
-				res.redirect("new_character");
+				else {
+					req.session.user_id = this.lastID;
+					res.redirect("new_character");
+				}
 			});
 		},
 
@@ -74,12 +76,15 @@ module.exports = function(utils) {
 
 		createCharacter: function(req, res) {
 			userHelper.authenticate(req, res, function(userObj) {
-				if (!userObj) return;
-
+				if (!userObj) res.send({});
 				var charName = req.body["character-name"];
-				userHelper.createCharacterForUser(charName, newUserObj, function(err) {
-					req.session.user_id = newUserObj._id;
-					res.redirect("dressroom");
+				userHelper.createCharacterForUser(charName, userObj, function(err) {
+					if (err) {
+						console.log(err);
+						res.send(err);
+					} else {
+						res.redirect("/dressroom");
+					}
 				});
 			});
 		}

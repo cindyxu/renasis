@@ -1,266 +1,359 @@
 module.exports = function(utils) {
 
-	var db = utils.db;
+	var db = utils.sqlitedb;
 	var gm = utils.gm;
 	var im = gm.subClass({ imageMagick : true });
 	var mout = utils.mout;
 	var fs = utils.fs;
 	var Q = utils.Q;
 	var _ = utils._;
+	var schemas = utils.schemas;
+	var schemaFields = schemas.fields;
+	var itemEquipDefs = schemas.definitions.item_equips;
+	var debug = utils.debug;
 
-	var Q = utils.Q;
-	var dbItems = db.get("items");
-	var dbUsers = db.get("users");
-	var dbChars = db.get("characters");
 	var wardrobeHelper = {};
-	var itemHelper = utils.itemHelper;
 
-	var CLOTHING_CATEGORY = "clothing";
+	var equipGroups = ["back", "behind", "arm_behind", "leg_behind", "torso", "head", "leg_above", "arm_above"];
+	var equipLayers = ["back", "front"];
 
-	var getEquipLayer = function(subcategory) {
-		return (subcategory === "back" ? "back" : "front");
+	var defaultPose = "";
+	for (var i = 0; i < equipGroups.length; i++) {
+		defaultPose += equipGroups[i] + ":0" + (i < equipGroups.length - 1 ? ";" : "");
+	}
+
+	wardrobeHelper.GET_ITEM_EQUIPS = 1;
+	wardrobeHelper.GET_LAYERS = 1 << 1;
+	wardrobeHelper.GET_ITEMS = 1 << 2;
+	wardrobeHelper.GET_ITEM_BLUEPRINTS = 1 << 3;
+
+	// converts pose_str into an object
+	wardrobeHelper.parsePose = function(poseStr) {
+		var groupSegs = poseStr.split(';');
+		var pose = {};
+		_.each(groupSegs, function(seg) { 
+			var poseOffsets = seg.split(':');
+			pose[poseOffsets[0]] = poseOffsets[1];
+		});
+		return pose;
 	};
 
-	wardrobeHelper.markItemsInOutfit = function(itemObjsSorted, outfit) {
-		var equipDescsAll = outfit.layers.front.concat(outfit.layers.back);
-		var outfitItemIdsSorted = _.pluck(equipDescsAll, "item_id").sort();
-		var j = 0;
-		for (var i = 0; i < itemObjsSorted.length; i++) {
-			var itemObj = itemObjsSorted[i];
-			itemObj.in_outfit = false;
-			
-			if (j >= outfitItemIdsSorted.length) break;
+	// converts poses_str into an object
+	wardrobeHelper.parsePoseOptions = function(posesStr) {
+		var groupSegs = posesStr.split(';');
+		var groups = {};
+		_.each(groupSegs, function(seg) {
+			var group = {};
+			var splitIdx = seg.indexOf(':');
+			var groupName = seg.substring(0, splitIdx);
+			var groupPosesStr = seg.substring(splitIdx+1, seg.length);
 
-			var outfitItemId = outfitItemIdsSorted[j];
-			console.log(itemObj._id, outfitItemId);
-			if (itemObj._id >= outfitItemId) {
-				if (itemObj._id.toString() === outfitItemId.toString()) {
-					console.log("FOUND " + itemObj.name);
-					itemObj.in_outfit = true;
-				}
+			if (groupPosesStr[0] === '(') groupPosesStr = groupPosesStr.substring(1, groupPosesStr.length);
+			if (groupPosesStr[groupPosesStr.length-1] === ')') groupPosesStr = groupPosesStr.substring(0, groupPosesStr.length - 1);
+			
+			var groupPosesSegs = groupPosesStr.split('|');
+			
+			_.each(groupPosesSegs, function(poseSeg) {
+				var poseOffsets = poseSeg.split(':');
+				var offsetStrs = poseOffsets[1].split(',');
+				group[poseOffsets[0]] = [parseInt(offsetStrs[0]), parseInt(offsetStrs[1])];
+			});
+			
+			groups[groupName] = group;
+		});
+		return groups;
+	};
+
+	// set "in_outfit" for all items in itemObjsSorted that appear in itemEquipsSorted
+	// sort is by item_id
+	wardrobeHelper.markItemsInOutfit = function(itemObjsSorted, itemEquipsSorted) {
+		if (!itemObjsSorted || !itemEquipsSorted) return;
+		var i = 0; 
+		var j = 0;
+		while (i < itemObjsSorted.length && j < itemEquipsSorted.length) {
+			var diff = itemObjsSorted[i].item_id - itemEquipsSorted[j].item_id;
+			if (diff === 0) {
+				itemObjsSorted[i].in_outfit = true;
+				i++;
+				j++;
+			} else if (diff < 0) {
+				i++;				
+			} else {
 				j++;
 			}
 		}
 	};
 
+	// format as { layer1: [ layer1 items ], layer2: [ layer2 items ] }
+	// sorted by order within each layer
+	wardrobeHelper.sortAsLayers = function(itemEquips) {
+		var layers = _.groupBy(itemEquips, function(e) { return e.layer; });
+		var getLayerOrder = function(e) { return e.layer_order; };
+		for (var cat in layers) {
+			layers[cat] = _.sortBy(layers[cat], getLayerOrder);
+		}
+		return layers;
+	};
+
 	// get clothes of this user with subcategory
-	wardrobeHelper.fetchWardrobeSubcategoryItemObjs = function(charObj, subcat, callback) {
-		// inventory: { clothes: { head: [], top: [] ... } }
-		dbUsers.col.aggregate([
-			{ "$match" : { "_id" : charObj.user_id }},
-			{ "$unwind" : "$inventory" },
-			{ "$match" : { "inventory.subcategory" : subcat }},
-			{ "$sort" : { "inventory._id" : 1 }}
-		], function(err, userObjs) {
-			var itemObjs = _.pluck(userObjs, "inventory");
-			callback(itemObjs);
-		});
+	wardrobeHelper.fetchWardrobeSubcategoryItemObjs = function(userId, subcat, callback) {
+		db.all("SELECT * FROM items " +
+			"INNER JOIN item_blueprints ON item_blueprints.item_blueprint_id = items.item_blueprint_id " +
+			"INNER JOIN item_equip_options ON item_equip_options.item_blueprint_id = item_blueprints.item_blueprint_id " +
+			"WHERE items.user_id = ? AND item_blueprints.subcategory = ? ORDER BY items.item_id",
+			[userId, subcat], callback);
 	};
 
-	wardrobeHelper.fetchOutfitItemObjs = function(outfit, callback) {
-		// TOOD: don't do this ... just make one database call and get them at once
-		var itemIdsFront = _.pluck(outfit.layers.front, "item_id");
-		Q.all(itemHelper.fetchItemObjsPromises(itemIdsFront, outfit.layers.front)).then(function() {
-			var itemIdsBack = _.pluck(outfit.layers.back, "item_id");
-			Q.all(itemHelper.fetchItemObjsPromises(itemIdsBack, outfit.layers.back)).then(function() {
-				callback();
-			});
-		});
-	};
-
-	// composites avatar img from list of items
-	wardrobeHelper.compAvatar = function(outfit, callback) {
-		var pose = outfit.pose;
-		var layers = outfit.layers;
-		var compGroupAlias = function(equipDesc, groupAlias) {
-			var itemObj = equipDesc.item;
-			if (itemObj.subcategory === "base") {
-				if (groupAlias === "above_c") {
-					compGroup(equipDesc, "arm_behind");
-				}
-				else if (groupAlias === "above_b") {
-					compGroup(equipDesc, "leg_behind");
-					compGroup(equipDesc, "torso");
-					compGroup(equipDesc, "leg_above");
-					compGroup(equipDesc, "head");
-				}
-				else if (groupAlias === "above_a") {
-					compGroup(equipDesc, "arm_above");
+	// returns outfit with optional flags.
+	// GET_ITEM_EQUIPS - will get item_equips in this outfit as outfit.itemEquips
+	// GET_LAYERS - will sort item_equips into their layers as outfit.layers
+	// GET_ITEMS - will get items attached to item_equips as outfit.itemEquips.item
+	// GET_BLUEPRINT - will get items attached to item_equips as outfit.itemEquips.blueprint
+	// blueprint will also include item_equip_option fields.
+	wardrobeHelper.findOutfit = function(outfitId, flags, callback) {
+		var selectQuery = "SELECT * FROM outfits";
+		var optionsQuery = " WHERE outfits.outfit_id = ?";
+		if (flags & wardrobeHelper.GET_ITEM_EQUIPS) {
+			selectQuery += " LEFT JOIN item_equips ON item_equips.outfit_id = outfits.outfit_id";
+			optionsQuery += " ORDER BY item_equips.item_id";
+			if (flags & wardrobeHelper.GET_ITEMS) {
+				selectQuery += " INNER JOIN items ON items.item_id = item_equips.item_id";
+				//todo; maybe store the blueprint id ....
+				if (flags & wardrobeHelper.GET_ITEM_BLUEPRINTS) {
+					selectQuery += " INNER JOIN item_blueprints ON item_blueprints.item_blueprint_id = items.item_blueprint_id";
+					selectQuery += " INNER JOIN item_equip_options ON item_equip_options.item_blueprint_id = item_blueprints.item_blueprint_id";
 				}
 			}
+		}
+
+		db.all(selectQuery + optionsQuery, outfitId, function(err, rows) {
+			if (err) { console.log(err); callback(err); return; }
+			if (rows && rows.length > 0) {
+				var outfit;
+				if (flags & wardrobeHelper.GET_ITEM_EQUIPS) {
+					outfit = _.pick(rows[0], schemaFields.outfits);
+					outfit.pose = wardrobeHelper.parsePose(outfit.pose_str);
+					outfit.itemEquips = _.map(rows, function(r) {
+						var itemEquip = _.pick(r, schemaFields.item_equips);
+						if (flags & wardrobeHelper.GET_ITEMS) {
+							itemEquip.item = _.pick(r, schemaFields.items);
+							if (flags & wardrobeHelper.GET_ITEM_BLUEPRINTS) {
+								itemEquip.blueprint = _.pick(r, schemaFields.item_blueprints.concat(schemaFields.item_equip_options));
+							}
+						}
+						return itemEquip;
+					});
+					if (flags & wardrobeHelper.GET_LAYERS) {
+						outfit.layers = wardrobeHelper.sortAsLayers(outfit.itemEquips);
+					}
+					callback(null, outfit);
+				} else {
+					outfit = rows[0];
+					outfit.pose = wardrobeHelper.parsePose(outfit.pose_str);
+					if (flags & wardrobeHelper.GET_ITEM_EQUIPS) {
+						outfit.itemEquips = [];
+					}
+					callback(null, outfit);
+				}
+			}
+			// there were no items in this outfit, so no results were returned
+			// so default to just getting the outfit object
 			else {
-				compGroup(equipDesc, groupAlias);
+				debug("no items found for outfit", outfitId);
+				wardrobeHelper.findOutfit(outfitId, 0, function(err, outfit) {
+					if (err) { console.log(err); callback(err); return; }
+					outfit.pose = wardrobeHelper.parsePose(outfit.pose_str);
+					callback(null, outfit);
+				});
 			}
-		};
+		});
+	};
 
-		var compGroup = function(equipDesc, group) {
-			var itemObj = equipDesc.item;
-			var poseForGroup = pose[group];
-			if (itemObj.poses[group]) {
-				var poseName = itemObj.poses[group][poseForGroup] ? poseForGroup : "0";
-				var offset = itemObj.poses[group][poseName]["offset"];
+	wardrobeHelper.compGroup = function(equip, blueprint, pose, group, buf) {
+		var poseForGroup = pose[group];
+		if (blueprint.poses[group]) {
+			var offset = blueprint.poses[group][poseForGroup];
+			if (offset !== undefined) {
 				var geometryArg = "+" + offset[0] + "+" + offset[1];
 				var itemImgPath = mout.string.makePath(
 					"public", 
 					"images",
 					"items",
 					"clothing",
-					itemObj.subcategory,
-					mout.string.underscore(itemObj.name), 
-					equipDesc.variety,
+					blueprint.subcategory,
+					mout.string.underscore(blueprint.item_name), 
+					equip.variety,
 					group,
-					poseName);
+					poseForGroup);
+				debug("compositing", itemImgPath);
 				buf = buf.in(itemImgPath + "_inner.png").in("-geometry", geometryArg).in("-compose", "over").in("-composite");
 				buf = buf.in(itemImgPath + "_outline.png").in("-geometry", geometryArg).in("-compose", "multiply").in("-composite");
 			}
-		};
+		}
+	};
+
+	/* 
+	 * composes the avatar image for a given outfit.
+	 * outfit must have layers as outfit.layers
+	 * as well as item_blueprint(+item_equip_option)
+	 * for each item in each layer.
+	 */
+	wardrobeHelper.compAvatar = function(outfit, callback) {
 
 		// transparent + base
 		var buf = im(60, 100, "#ffffff00").in("-alpha", "Set");
-		// put item on
-		var layerBack = layers.back;
-		var layerFront = layers.front;
 
-		for (var i = 0; i < layerBack.length; i++) {
-			compGroupAlias(layerBack[i], "back");
-		}
-		for (var i = layerFront.length - 1; i >= 0; i--) {
-			compGroupAlias(layerFront[i], "behind");
-		}
-		for (var i = 0; i < layerFront.length; i++) {
-			compGroupAlias(layerFront[i], "above_c");
-		}
-		for (var i = 0; i < layerFront.length; i++) {
-			compGroupAlias(layerFront[i], "above_b");
-		}
-		for (var i = 0; i < layerFront.length; i++) {
-			compGroupAlias(layerFront[i], "above_a");
+		if (!_.isEmpty(outfit.layers)) {
+			debug("compositing outfit: ", outfit.outfitId);
+			// put item on
+			for (var k = 0; k < equipLayers.length; k++) {
+				var layer = outfit.layers[equipLayers[k]];
+				if (layer) {
+					for (var j = 0; j < equipGroups.length; j++) {
+						for (var i = 0; i < layer.length; i++) {
+							var equip = layer[i];
+							var blueprint = layer[i].blueprint;
+							blueprint.poses = wardrobeHelper.parsePoseOptions(blueprint.poses_str);
+							wardrobeHelper.compGroup(equip, blueprint, outfit.pose, equipGroups[j], buf);
+						}
+					}
+				}
+			}
 		}
 
 		// composite and write to img path
 		buf.in("-filter", "point").in("-resize", "200%").write("public/images/testout.png", function(err) {
-			if (err) { console.log(err); }
+			if (err) { console.log(err); callback(err); return; }
 			callback();
 		});
-
-		//create buffer
-		/*
-		gm()
-		.in('-page', '+0+0')
-		.in("public/images/avatar.jpg")
-		.in('-page', '+0+0')
-		.in('-compose', 'Multiply')
-		.in("public/images/splash.jpg")
-		.mosaic()
-		.write("public/images/testout.png", function(err) {
-			if (err) { console.log(err); }
-			res.send({});
-		});
-		*/
 	};
 
-	wardrobeHelper.equipItemInOutfit = function(charObj, itemObj, outfitName, newEquipDesc, callback) {
+	wardrobeHelper.equipItemInOutfit = function(itemId, outfitId, newEquipDesc, callback) {
+		// adds an item_equip object as the next highest layer order
+		debug("equip item", itemId, "in outfit", outfitId);
+		db.get("SELECT * FROM items INNER JOIN item_blueprints ON item_blueprints.item_blueprint_id = items.item_blueprint_id " +
+			"WHERE item_id = ?", itemId, function(err, itemObj) {
+				var layer = itemEquipDefs.layer(itemObj);
+				db.run("BEGIN TRANSACTION").get(
+					"SELECT layer_order FROM item_equips WHERE outfit_id = ? AND layer = ? ORDER BY layer_order DESC LIMIT 1",
+					[outfitId, layer], function(err, layerOrderObj) {
+						if (err) { console.log(err); callback(err); return; }
+						var layerOrder = (layerOrderObj ? layerOrderObj.layer_order + 1 : 0);
+						debug("next layer order:", layerOrder);
+						db.run("INSERT INTO item_equips (item_id, item_alias, variety, outfit_id, layer, layer_order) VALUES " +
+						"($item_id, $item_alias, $variety, $outfit_id, $layer, $layer_order)", {
+						"$item_id" : itemObj.item_id,
+						"$item_alias" : itemObj.item_alias,
+						"$outfit_id" : outfitId,
+						"$variety" : newEquipDesc.variety,
+						"$layer" : layer,
+						"$layer_order" : layerOrder }, function(err) {
+							if (err) { console.log(err); callback(err); return; }
+							db.run("COMMIT", function(err) {
+								if (err) { console.log(err); callback(err); return; }
+								else {
+									var results = { "inserted" : [
+										{
+											"item_id" : itemObj.item_id,
+											"item_alias" : itemObj.item_alias,
+											"variety" : newEquipDesc.variety,
+											"layer": layer,
+											"layer_order" : layerOrder
+										}
+									]};
+									debug("equip results:", JSON.stringify(results, undefined, 2));
+									callback(undefined, results);
+								}
+							});
+						});
+				});
+		});
+	};
 
-		var outfit = charObj.outfits[outfitName];
-		var itemId = itemObj._id;
+	wardrobeHelper.shiftItemInOutfit = function(itemId, predItemId, outfitId, callback) {
+		debug("move item", itemId, "on top of", predItemId);
+		db.run("BEGIN TRANSACTION").all("SELECT * FROM items " +
+			"INNER JOIN item_equips ON item_equips.item_id = items.item_id " +
+			"WHERE item_equips.outfit_id = ? AND item_equips.item_id IN (?, ?)", 
+			[outfitId, itemId, predItemId], function(err, switchItemObjs) {
+				if (err) { console.log(err); callback(err); return; }
+				var pred, curr;
 
-		newEquipDesc["item_id"] = itemObj._id;
-		
-		var layerName = getEquipLayer(itemObj.subcategory);
-		var layers = outfit.layers;
-		var itemIndex = _.findIndex(layers[layerName], function(e) { return e.item_id.equals(itemId); });
-
-		var query = { _id: charObj._id };
-		var opts = { "new" : true };
-		var updateSet = {};
-
-		// TODO: maybe in the future, prevent duplicate adds ...
-		// TODO: verify that newEquipDesc is valid
-
-		// if not already equipped, add new object in outfit
-		if (itemIndex === undefined) {
-			layers[layerName].push(newEquipDesc);
-		}
-		// otherwise just updateSet attributes in existing object
-		else {
-			layers[layerName][itemIndex] = newEquipDesc;
-		}
-
-		var updateKey = "outfits." + outfitName + ".layers." + layerName;
-		updateSet[updateKey] = layers[layerName];
-
-		dbChars.findAndModify(query, { "$set" : updateSet }, opts, function(err, charObjNew) {
-			if (err) { console.log(err); }
-			else {
-				var results;
-				var newItemIndex = _.find(charObjNew.outfits[outfitName].layers[layerName], function(e) { return e.item_id.equals(itemId); })
-				if (newItemIndex !== undefined) {
-					results = {};
-					results["equip_index"] = newItemIndex;
-					results["equip_layer"] = layerName;
+				if (switchItemObjs[0].item_id === itemId) {
+					curr = switchItemObjs[0];
+					pred = switchItemObjs[1];
 				}
-				callback(charObjNew, results);
+				else {
+					curr = switchItemObjs[1];
+					pred = switchItemObjs[0];	
+				}
+
+				var prevLayerOrder = curr.layer_order;
+				var newLayerOrder;
+				var query, queryArr;
+
+				if (!pred) {
+					newLayerOrder = 0;
+					query = "UPDATE item_equips SET layer_order = layer_order+1 " +
+						"WHERE outfit_id = ? AND layer = ? AND item_id != ? AND layer_order >= ?";
+					queryArr = [outfitId, curr.layer, itemId, newLayerOrder];
+				}
+				else if (pred.layer_order < prevLayerOrder) {
+					newLayerOrder = pred.layer_order + 1;
+
+					query = "UPDATE item_equips SET layer_order = layer_order+1 " +
+						"WHERE outfit_id = ? AND layer = ? AND item_id != ? " +
+						"AND layer_order < ? AND layer_order >= ?";
+					queryArr = [outfitId, curr.layer, itemId, prevLayerOrder, newLayerOrder];
+				}
+				else {
+					newLayerOrder = pred.layer_order;
+					query = "UPDATE item_equips SET layer_order = layer_order-1 " +
+						"WHERE outfit_id = ? AND layer = ? AND item_id != ? " +
+						"AND layer_order > ? AND layer_order <= ?";
+					queryArr = [outfitId, curr.layer, itemId, prevLayerOrder, newLayerOrder];
+				}
+
+				db.run("UPDATE item_equips SET layer_order = ? WHERE item_id = ?", newLayerOrder, itemId, function(err) {
+					if (err) { console.log(err); callback(err); return; }
+					db.run(query, queryArr, function(err) {
+						if (err) { console.log(err); callback(err); return; }
+						db.run("COMMIT", function(err) {
+							if (err) { console.log(err); callback(err); return; }
+							callback(err, {});
+						});	
+					});
+				});
 			}
-		});
+		);
 	};
 
-	wardrobeHelper.shiftItemInOutfit = function(charObj, itemObj, outfitName, direction, callback) {
-		var outfit = charObj.outfits[outfitName];
-		var itemId = itemObj._id;
-		
-		var layers = outfit.layers;
-		var layerName = getEquipLayer(itemObj.subcategory);
-		var layer = layers[layerName];
-		var itemIndex = _.findIndex(outfit.layers[layerName], function(e) { return e.item_id.equals(itemId); });
-		
-		// shouldn't happen
-		if (itemIndex === undefined) {
-			console.log("couldn't find item!");
-			callback(charObj);
-		}
-
-		// shift down
-		if (direction > 0 && itemIndex < layer.length - 1) {
-			var tmp = layer[itemIndex+1];
-			layer[itemIndex+1] = layer[itemIndex];
-			layer[itemIndex] = tmp;
-		}
-		// shift up
-		else if (direction < 0 && itemIndex > 0) {
-			var tmp = layer[itemIndex-1];
-			layer[itemIndex-1] = layer[itemIndex];
-			layer[itemIndex] = tmp;	
-		}
-
-		var query = { _id: charObj._id };
-		var opts = { "new" : true };
-		var updateSet = {};
-		var updateKey = "outfits." + outfitName + ".layers." + layerName;
-		updateSet[updateKey] = layers[layerName];
-		dbChars.findAndModify(query, { "$set" : updateSet }, opts, function(err, charObjNew) {
-			if (err) { console.log(err); }
-			else {
-				var results = { "swapped_item_id" : tmp.item_id };
-				callback(charObjNew, results);
+	wardrobeHelper.unequipItemInOutfit = function(itemId, outfitId, callback) {
+		// deletes the item_equip in question, then shifts layer_orders of all items above it
+		// TODO: ERROR CHECKING
+		debug("deequip item", itemId, "in outfit", outfitId);
+		db.run("BEGIN TRANSACTION").get(
+			"SELECT layer, layer_order FROM item_equips WHERE outfit_id = ? AND item_id = ?", 
+			[outfitId, itemId], function(err, itemEquipObj) {
+				if (err) console.log(err);
+				db.run("DELETE FROM item_equips WHERE outfit_id = ? AND item_id = ?",
+					[outfitId, itemId], function(err) {
+						if (err) console.log(err);
+						db.run("UPDATE item_equips SET layer_order = layer_order - 1 WHERE layer = ? AND layer_order > ?",
+						[itemEquipObj.layer, itemEquipObj.layer_order], function(err) {
+							if (err) console.log(err);
+							db.run("COMMIT", function(err) {
+								if (err) console.log(err);
+								var results = { "removed" : [{ 
+									"item_id" : itemId
+								}]};
+								callback(err, results);
+							});	
+						});
+					}
+				);
 			}
-		});
-	};
-
-	wardrobeHelper.unequipItemInOutfit = function(charObj, itemObj, outfitName, callback) {
-		var findAndModifyQuery = {};
-
-		var query = { _id: charObj._id };
-		var opts = { "new" : true };
-		var pullKey = "outfits." + outfitName + ".layers." + getEquipLayer(itemObj.subcategory);
-		var update = { "$pull" : {} };
-		update["$pull"][pullKey] = { "item_id" : itemObj._id };
-
-		dbChars.findAndModify(query, update, opts, function(err, charObjNew) {
-			if (err) { console.log(err); }
-			else {
-				callback(charObjNew);
-			}
-		});
+		);
 	};
 
 	return wardrobeHelper;

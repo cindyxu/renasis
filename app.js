@@ -11,16 +11,12 @@ var http = require('http');
 var path = require('path');
 
 var mongo = require('mongodb');
-
 var monk = require('monk');
 var db = monk('localhost:27017/renasistest');
 
 var sqlite3 = require('sqlite3').verbose();
 var sqlitedb = new sqlite3.Database("sqldata/renasistest");
-var dbTasks = require('./tasks')(sqlitedb);
-sqlitedb.serialize(function() {
-	dbTasks.recreateTables();
-})
+var dbTasks = require('./db/tasks')(sqlitedb);
 
 var bcrypt = require('bcrypt');
 
@@ -29,6 +25,7 @@ var gm = require('gm');
 var mout = require('mout');
 var Q = require('q');
 var crypto = require('crypto');
+var debug = require('debug')('renasis');
 
 var _ = require('underscore');
 _.mixin({
@@ -46,28 +43,44 @@ _.mixin({
 
 var utils = { 
 	"db" : db, 
+	"sqlitedb" : sqlitedb,
 	"mout" : mout, 
 	"gm" : gm, 
 	"fs" : fs, 
 	"Q" : Q, 
 	"_" : _, 
 	"bcrypt" : bcrypt,
-	"crypto" : crypto };
+	"crypto" : crypto,
+	"debug" : debug };
 
+utils.config = require('./config.js');
 utils.constants = require('./routes/helpers/constants');
+utils.schemas = require('./db/schemas.js');
 // nondependents
 utils.creationHelper = require('./routes/helpers/creation')(utils);
 
 // possibly dependents
 utils.userHelper = require('./routes/helpers/user')(utils);
-utils.itemHelper = require('./routes/helpers/item')(utils);
 utils.creationHelper = require('./routes/helpers/creation')(utils);
 utils.wardrobeHelper = require('./routes/helpers/wardrobe')(utils);
-
+utils.forumHelper = require('./routes/helpers/forum')(utils);
 
 var wardrobe = require('./routes/wardrobe')(utils);
 var user = require('./routes/user')(utils);
 var forum = require('./routes/forum')(utils);
+
+sqlitedb.serialize(function() {
+	dbTasks.recreateTables(function() {
+		dbTasks.populateItemBlueprints(function() {
+			dbTasks.populateSubforums(function() {
+				dbTasks.createItemInstances(1, function() {
+					dbTasks.createGod(utils.userHelper);
+				});
+			});
+		});
+	});
+});
+
 var app = express();
 
 // all environments
@@ -119,4 +132,5 @@ app.get('/:what', routes.index);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
+  debug("initialized!");
 });

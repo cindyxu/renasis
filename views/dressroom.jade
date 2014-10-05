@@ -1,29 +1,34 @@
 extends layout
 
 block append links
+	script(src="/javascripts/jquery-ui.min.js")
+	script(src="/javascripts/seqqueue.js")
+	script(src="/javascripts/schemas.js")
 	script(src="/javascripts/dressroom.js")
 
 mixin wardrobe-col()
 	#wardrobe-col
 		#wardrobe
+			ul#subcategory-tabs
+				li.hover-pointer= "base"
+				li.hover-pointer= "face"
+				li.hover-pointer= "hair"
+				li.hover-pointer= "head"
+				li.hover-pointer= "top"
+				li.hover-pointer= "bottom"
+				li.hover-pointer= "feet"
+				li.hover-pointer= "back"
 			#wardrobe-inner
-				ul#subcategory-tabs
-					li.hover-pointer= "base"
-					li.hover-pointer= "face"
-					li.hover-pointer= "hair"
-					li.hover-pointer= "head"
-					li.hover-pointer= "top"
-					li.hover-pointer= "bottom"
-					li.hover-pointer= "feet"
-					li.hover-pointer= "back"
 				#subcategory-items
 					ul
 						- for item, i in wardrobe
-							li.wardrobe-item.hover-pointer( 
-								data-item-name= item.name, 
+							li.wardrobe-item.hover-pointer(
+								id= "wardrobe-item-" + item.item_id,
+								data-item-name= item.item_alias, 
 								data-item-in-outfit= item.in_outfit, 
-								data-item-variety= item.varieties[0], 
-								data-item-id= item._id.toString().replace(/"/g, ""))
+								data-item-subcategory= item.subcategory,
+								data-item-variety= (item.varieties.split(',')[0]), 
+								data-item-id= item.item_id)
 
 mixin equipped-col(outfit)
 	#equipped-col
@@ -33,24 +38,33 @@ mixin equipped-col(outfit)
 					ul
 						mixin equipped-layer(outfit, "front")
 						mixin equipped-layer(outfit, "back")
-						
+
 mixin equipped-layer(outfit, layerName)
 	- var layer = outfit.layers[layerName];
 	li.equipped-layer( id = "equipped-layer-" + layerName )
 		p.header= layerName
 		ul
-			- for (var j = layer.length-1; j >= 0; j--)
-				mixin equipped-item(layer[j])
+			- if (layer)
+				- for (var j = layer.length-1; j >= 0; j--)
+					mixin equipped-item(layer[j])
 
-mixin equipped-item(equipDesc)
-	li.equipped-item( data-item-name= equipDesc.item.name, data-item-id= equipDesc.item._id.toString().replace(/"/g, ""))
+mixin equipped-item(itemEquip)
+	li.equipped-item( id= "equipped-item-"+itemEquip.item_id,
+		data-item-name= itemEquip.item_alias,
+		data-item-id= itemEquip.item_id,
+		data-item-layer-order= itemEquip.layer_order,
+		data-item-variety= itemEquip.variety )
 
 block inner-content
 	#dressroom
-		mixin wardrobe-col()
-		#preview
-			#preview-actions
-				button#save-as-current= "save"
-			#preview-inner
-				img#outfit-preview(src="/images/testout.png")
-		mixin equipped-col(character.outfits["wip"])
+		#dressroom-inner
+			#preview
+				#preview-inner
+					img#outfit-preview(src="/images/testout.png")
+				#preview-actions
+					button#save-as-current= "save"
+			#dressroom-fluid
+				mixin equipped-col(outfitWip)
+				mixin wardrobe-col()
+				
+			

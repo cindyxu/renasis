@@ -73,9 +73,9 @@ var buildNewPostForm = function() {
 var buildNewPostFormContainer = function() {
 	var postCount = $(".post-container").length;
 
-	var postContainer = $('<div class="post-container ' 
-		+ (postCount % 2 == 0 ? "left" : "right") 
-		+ '">');
+	var postContainer = $('<div class="post-container ' +
+		(postCount % 2 === 0 ? "left" : "right") +
+		'">');
 	postContainer.css("padding-left", "140px");
 	postContainer.css("position", "fixed");
 	postContainer.css("bottom", "0");
@@ -96,7 +96,7 @@ var buildNewPostFormContainer = function() {
 $(function() {
 	$("a#new-post").click(function(e) {
 
-		if ($("#new-post-preview").parents(".post-container").length == 0) {
+		if ($("#new-post-preview").parents(".post-container").length === 0) {
 			var postContainer = buildNewPostFormContainer();
 			// scroll down & slide down
 			$("#right-column").append(postContainer);

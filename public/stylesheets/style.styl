@@ -24,6 +24,8 @@ $header-bar-height = 4rem
 $preview-width = 130px
 $preview-height = 220px
 
+$wardrobe-tab-height = 1.3rem
+
 border-gradient(c1, c2)
 	background-image: -webkit-gradient(linear, left bottom, right bottom, color-stop(0.2, c1), color-stop(0.5, c2), color-stop(0.8, c1))
 	background-image: -moz-linear-gradient(left center, c1 20%, c2 50%, c1 80% )
@@ -39,6 +41,14 @@ box-shadow(args...)
 	-moz-box-shadow args
 	box-shadow args
 
+fluid-column()
+	overflow: hidden
+	width: auto
+
+fixed-right-column(columnWidth)
+	width: columnWidth
+	float: right
+
 post()
 	background-color: white
 	padding: 1rem
@@ -49,11 +59,15 @@ post()
 	img.post-emote
 		margin: 0 2px
 
-smalltab()
+wardrobe-tab()
 	display: inline-block
-	padding: 0.2rem 0.3rem 0.15rem 0.3rem
-	font-size: 0.5rem
-	border-radius 3px 3px 0 0
+	padding: 0.2rem 0.5rem
+	margin-right: 0.4rem
+	font-size: 0.7rem
+	height: 100%
+	vertical-align: top
+	border: 1px solid $tan
+	border-width: 0 2px
 
 h1
 	font-family: "Lora", serif
@@ -296,92 +310,125 @@ ul
 	margin: 0
 
 #dressroom
-	margin: 0 auto
+	height: 100%
+	padding: 1rem 1rem
 	text-align: center
 	position: relative
-	display: inline-block
-	background-color: $dim-tan
 	border-radius: 10px
 	padding: 1rem
 	> *
 		vertical-align: top
+	#dressroom-inner
+		background-color: $dim-tan
+		height: 100%
+		overflow: hidden
+		padding: 0 1rem
+
+	#dressroom-fluid
+		fluid-column()
+		padding-right: 1rem
+		height: 100%
+		text-align: right
+		
 	#wardrobe-col
-		display: inline-block
-		min-width: 300px		
+		padding-top: 1rem
+		padding-bottom: 1rem
+		fluid-column()
+		border-right: 2px dashed white
+		padding-right: 1rem
+		height: 100%
 		> *
 			width: 100%
-		#wardrobe
-			padding: 0 0.5rem
-			#wardrobe-inner
-				border-radius: 10px
-				padding-top: 1.5rem
-				ul#subcategory-tabs
-					width: 100%
-					text-align: left
-					font-size: 1.5rem
-					z-index: 1
-					display: inline-block
-					li
-						smalltab()
-						color: white
-						margin-right: 0.2rem
-						background-color: $cocoa
-				#subcategory-items
-					background-color: white
-					overflow-y: scroll
-					border-radius: 0 0 10px 10px
-					padding: 0.5rem
-					text-align: left
-			ul li
-				display: inline-block
-
-	#equipped-col
+	#wardrobe
+		height: 100%
+		position: relative
+	ul#subcategory-tabs
+		width: 100%
 		text-align: left
-		padding: 0 0.5rem
+		font-size: 1.5rem
+		z-index: 1
 		display: inline-block
-		min-width: 200px
-		#equipped-inner
-			.equipped-layer
-				margin-bottom: 0.5rem
-				.header
-					smalltab()
-					background-color: $faded-red
-				ul
-					background-color: white
-					li
-						border-bottom: 1px solid $pale-tan
-						position: relative
-						padding-top: 0.4rem
-						span
-							color: $cocoa
-							padding-left: 0.5rem
-						.actions
-							position: absolute
-							right: 0
-							bottom: 0
-							button
-								background-color: $pale-tan
-								border-width: 0
-								margin: 0
+		position: absolute
+		height: $wardrobe-tab-height
+		top: 0
+		left: 0
+		li
+			wardrobe-tab()
+			color: white
+			background-color: $cocoa
+			&:hover
+				background-color: $dim-cocoa
+	#wardrobe-inner
+		border-radius: 10px
+		height: 100%
+		padding-top: $wardrobe-tab-height
+	#subcategory-items
+		background-color: white
+		height: 100%
+		overflow-y: scroll
+		border-radius: 0 0 10px 10px
+		text-align: left
+		padding: 0.5rem
+		ul li
+			display: inline-block
+			&:hover
+				background-color: $aqua
+	#equipped-col
+		border-right: 2px dashed white
+		padding: 1rem
+		text-align: left
+		fixed-right-column(25%)
+		max-width: 300px
+		height: 100%
+	#equipped
+		height: 100%
+	#equipped-inner
+		height: 100%
+		.equipped-layer
+			margin-bottom: 1rem
+			.header
+				width: 100%
+				background-color: $cocoa
+				color: white
+				padding: 0.1rem
+			ul
+				overflow-y: scroll
+				background-color: white
+	.equipped-item
+		border-bottom: 1px solid $pale-tan
+		position: relative
+		padding-top: 0.4rem
+		background-color: white
+		span
+			color: $cocoa
+			padding-left: 0.5rem
+		.actions
+			position: absolute
+			right: 0
+			bottom: 0
+			button
+				background-color: $pale-tan
+				border-width: 0
+				margin: 0
+
 	#preview
-		display: inline-block
-		width: $preview-width
-		padding: 0
-		margin: 0
+		padding-top: 1rem
+		padding-bottom: 1rem
+		fixed-right-column($preview-width)
 		> *
 			display: inline-block
 			width: 100%
-		#preview-actions
-			height: 1.5rem
-			background-color: $aqua
-			button
-				border-width: 0
-				background-color: transparent
-		#preview-inner
-			background-color: white
-			width: $preview-width
-			height: $preview-height
-			overflow: hidden
+	#preview-actions
+		height: 1.5rem
+		background-color: $aqua
+		button
+			border-width: 0
+			background-color: transparent
+	#preview-inner
+		background-color: white
+		width: $preview-width
+		height: $preview-height
+		overflow: hidden
 
 #forum-bar
 	padding: 0 $std-margin-side
