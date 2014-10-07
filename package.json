@@ -15,6 +15,7 @@
     "gm": "*",
     "q" : "*",
     "underscore" : "*",
+    "underscore.string" : "*",
     "mongoskin" : "*",
     "bcrypt" : "*",
     "sqlite3" : "*",

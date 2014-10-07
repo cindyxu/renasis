@@ -30,8 +30,8 @@ module.exports = function(utils) {
 	};
 
 	userHelper.REQUIRES_PREFERENCES = 1;
-	userHelper.REQUIRES_CHARACTER = 1 >> 1;
-	userHelper.CHECK_ONLY = 1 >> 2;
+	userHelper.REQUIRES_CHARACTER = 1 << 1;
+	userHelper.CHECK_ONLY = 1 << 2;
 
 	userHelper.authenticate = function(req, res, flags, callback) {
 		if (!callback) {
@@ -40,7 +40,7 @@ module.exports = function(utils) {
 		}
 
 		var requiresCharacter = (flags & userHelper.REQUIRES_CHARACTER);
-		var requiresPrefs = (flags & userHelper.REQUIRES_PREFERENCES);
+		var requiresPreferences = (flags & userHelper.REQUIRES_PREFERENCES);
 		
 		if (req.session && req.session.user_id) {
 
@@ -60,9 +60,9 @@ module.exports = function(utils) {
 					userHelper.authFailure(req, res, flags, callback);
 				}
 				else {
-					var userObj = _.pick(rows[0], schemaFields.users);
+					// 2 lazy 2 take out user fields
+					var userObj = rows[0];
 					if (requiresCharacter) {
-						// 2 lazy 2 take out user fields
 						userObj.characters = rows;						
 						if (userObj.primary_character_id) {
 							userObj.primary_character = _.findWhere(userObj.characters, { "character_id" : userObj.primary_character_id });
@@ -70,7 +70,7 @@ module.exports = function(utils) {
 					}
 					if (requiresPreferences) {
 						// lol
-						userObj.preferences = rows;
+						userObj.preferences = rows[0];
 					}
 					callback(userObj);
 				}
@@ -84,7 +84,7 @@ module.exports = function(utils) {
 
 	userHelper.authFailure = function(req, res, flags, callback) {
 		debug("Not logged in");
-		if (flags ^ userHelper.CHECK_ONLY) {
+		if (!(flags & userHelper.CHECK_ONLY)) {
 			req.session.redirect_to = req.url;
 			res.redirect("/login");
 		}

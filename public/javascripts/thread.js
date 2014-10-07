@@ -13,7 +13,7 @@ var attachPreviewPostButtonListener = function(pb) {
 		e.stopPropagation();
 		e.preventDefault();
 
-		var postTextarea = $("textarea#new-post-message");
+		var postTextarea = $("textarea#new-post-message-bb");
 		bbRaw = postTextarea.val();
 		var bbRes = XBBCODE.process({ text: bbRaw, removeMisalignedTags: false, addInLineBreaks: true });
 		bbRes.html = parseForEmotes(bbRes.html);
@@ -56,7 +56,7 @@ var buildNewPostForm = function() {
 
 	var postEdit = $('<div id="new-post-edit">');
 	postEdit.append(buildEmotesElem());
-	postEdit.append($('<textarea id="new-post-message" placeHolder="Write something!">'));
+	postEdit.append($('<textarea id="new-post-message-bb" placeHolder="Write something!">'));
 	postForm.append(postEdit);
 
 	postForm.append($('<div id="new-post-preview">'));

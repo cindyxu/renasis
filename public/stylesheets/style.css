@@ -84,7 +84,7 @@ html {
 #post-emotes a img:hover {
   bottom: 2px;
 }
-form#new-post-form textarea#new-post-message {
+form#new-post-form textarea#new-post-message-bb {
   width: 100%;
   min-height: 10rem;
   border-width: 0;

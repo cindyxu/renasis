@@ -1,5 +1,10 @@
-module.exports = function(db) {
+module.exports = function(utils) {
 	var taskExports = {};
+
+	var schemas = utils.schemas;
+	var db = utils.sqlitedb;
+	var _ = utils._;
+	var _str = _.str;
 
 	var equipGroups = ["back", "behind", "arm_behind", "leg_behind", "torso", "leg_above", "arm_above", "head"];
 	var defaultPose = "";
@@ -19,6 +24,106 @@ module.exports = function(db) {
 		};
 	};
 
+	taskExports.clearTables = function(callback) {
+		var deleteCmds = _.map(Object.keys(schemas.models), function(k) {
+			return "DELETE FROM " + k;
+		});
+		callbackIter(deleteCmds, 0, callback)();
+	};
+
+	taskExports.dropTables = function(callback) {
+		var dropCmds = _.map(Object.keys(schemas.models), function(k) {
+			return "DROP TABLE " + k;
+		});
+		callbackIter(dropCmds, 0, callback)();
+	};
+
+	taskExports.createTables = function(callback) {
+		var createCmds = [];
+		var triggerModels = [];
+
+		_.each(Object.keys(schemas.models), function(modelName) {
+			var createCmd = [];
+			var model = schemas.models[modelName];
+
+			createCmd.push("CREATE TABLE " + modelName + " (");
+
+			if (model.primaryKey) {
+				var primaryKeyArr = model.primaryKey;
+				createCmd.push(primaryKeyArr[0] + " " + primaryKeyArr[1] + " PRIMARY KEY" + 
+					(primaryKeyArr[2] ? " " + _str.join(" ", primaryKeyArr[2]) : "") + 
+					(primaryKeyArr[3] ? " DEFAULT " + primaryKeyArr[3] : "") + ",");
+			}
+
+			for (var field in model.fields) {
+				var fieldAttrs = model.fields[field];
+				createCmd.push(field + " " + fieldAttrs[0] + 
+					(fieldAttrs[1] ? " " + _str.join(" ", fieldAttrs[1]) : "") +
+					(fieldAttrs[2] ? " DEFAULT " + fieldAttrs[2] : "") + ",");
+			}
+
+			for (var foreignKey in model.foreignKeys) {
+				var foreignKeyArr = model.foreignKeys[foreignKey];
+				createCmd.push(foreignKey + " " + foreignKeyArr[0] +
+					(foreignKeyArr[3] ? " " + _str.join(" ", foreignKeyArr[3]) : "") + 
+					(foreignKeyArr[4] ? " DEFAULT " + foreignKeyArr[4] : "") + ",");
+			}
+
+			if (model.timestamps) {
+				createCmd.push("created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ");
+				createCmd.push("updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ");
+			}
+
+			for (foreignKey in model.foreignKeys) {
+				foreignKeyAttrs = model.foreignKeys[foreignKey];
+				createCmd.push( "FOREIGN KEY (" + foreignKey + ") REFERENCES " + foreignKeyAttrs[1] + "(" + foreignKeyAttrs[2] + ")," );
+			}
+
+			if (model.triggers || model.timestamps) {
+				triggerModels.push(modelName);
+			}
+			
+			createCmd[createCmd.length - 1] = _str.rtrim(createCmd[createCmd.length-1], [' ', ',']);
+			createCmd.push(")");
+			createCmds.push(createCmd);
+		});
+
+		_.each(triggerModels, function(modelName) {
+			var model = schemas.models[modelName];
+			var triggers = model.triggers;
+			if (model.timestamps) {
+				triggers.INSERT.AFTER.push(
+					"UPDATE " + modelName + " SET updated_at = CURRENT_TIMESTAMP " +
+					"WHERE " + model.primaryKey[0] + " = new." + model.primaryKey[0]);
+			}
+
+			for (var action in model.triggers) {
+				for (var prec in model.triggers[action]) {
+					var triggerArr = model.triggers[action][prec];
+					if (triggerArr.length === 0) { continue; }
+					var triggerCmd = [];
+					triggerCmd.push("CREATE TRIGGER " + 
+						prec.toLowerCase() + "_" + action.toLowerCase() + "_" + modelName + " " +
+						prec + " " + action + " ON " + modelName + " BEGIN");
+					_.each(triggerArr, function(tl) {
+						triggerCmd.push(tl + ";");
+					});
+					triggerCmd.push("END");
+					createCmds.push(triggerCmd);
+				}
+			}
+		});
+
+		for (var c in createCmds) {
+			createCmds[c] = _str.join("\n", createCmds[c]);
+			console.log(createCmds[c]);
+		}
+		console.log("");
+
+		callbackIter(createCmds, 0, callback)();
+	};
+
+	/*
 	taskExports.recreateTables = function(callback) {
 
 		var seqCmds = [
@@ -32,6 +137,7 @@ module.exports = function(db) {
 			'DELETE FROM item_blueprints',
 			'DELETE FROM threads',
 			'DELETE FROM subforums',
+			'DELETE FROM posts',
 
 			'DROP TABLE item_equips',
 			'DROP TABLE outfits',
@@ -43,6 +149,7 @@ module.exports = function(db) {
 			'DROP TABLE users',
 			'DROP TABLE threads',
 			'DROP TABLE subforums',
+			'DROP TABLE posts',
 
 			'CREATE TABLE users (' +
 				'user_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
@@ -56,7 +163,7 @@ module.exports = function(db) {
 				'FOREIGN KEY (primary_character_id) REFERENCES characters(character_id))',
 
 			'CREATE TRIGGER update_user AFTER UPDATE ON users BEGIN ' +
-				'UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE user_id = old.user_id; ' +
+				'UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE user_id = new.user_id; ' +
 			'END', 
 
 			'CREATE TABLE preferences (' +
@@ -94,8 +201,8 @@ module.exports = function(db) {
 				'UPDATE characters SET wip_outfit_id = last_insert_rowid();' +
 			'END',
 
-			'CREATE TRIGGER update_characters AFTER UPDATE ON characters BEGIN ' +
-				'UPDATE characters SET updated_at = CURRENT_TIMESTAMP WHERE character_id = old.character_id; ' +
+			'CREATE TRIGGER update_character AFTER UPDATE ON characters BEGIN ' +
+				'UPDATE characters SET updated_at = CURRENT_TIMESTAMP WHERE character_id = new.character_id; ' +
 			'END', 
 
 			'CREATE TABLE outfits (' +
@@ -126,8 +233,8 @@ module.exports = function(db) {
 				'FOREIGN KEY (user_id) REFERENCES users(user_id), ' +
 				'FOREIGN KEY (item_blueprint_id) REFERENCES item_blueprints(item_blueprint_id))',
 
-			'CREATE TRIGGER update_items AFTER UPDATE ON items BEGIN ' +
-				'UPDATE items SET updated_at = CURRENT_TIMESTAMP WHERE item_id = old.item_id; ' +
+			'CREATE TRIGGER update_item AFTER UPDATE ON items BEGIN ' +
+				'UPDATE items SET updated_at = CURRENT_TIMESTAMP WHERE item_id = new.item_id; ' +
 			'END', 
 
 			'CREATE TABLE item_equip_options (' +
@@ -158,25 +265,54 @@ module.exports = function(db) {
 				'thread_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
 				'thread_name TEXT NOT NULL, ' +
 				'thread_alias TEXT NOT NULL, ' +
+
 				'creator_id INTEGER NOT NULL, ' +
-				'last_poster_id INTEGER NOT NULL, ' +
+				'creator_name TEXT NOT NULL, ' +
+				
+				'last_poster_id INTEGER, ' +
+				'last_poster_name TEXT, ' +
+				
 				'subforum_id INTEGER NOT NULL, ' +
 				'subforum_name TEXT NOT NULL, ' +
 				
 				'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
 				'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-				'last_post_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
 
 				'FOREIGN KEY (subforum_id) REFERENCES subforums(subforum_id), ' +
 				'FOREIGN KEY (creator_id) REFERENCES characters(character_id), ' +
 				'FOREIGN KEY (last_poster_id) REFERENCES characters(character_id))',
 
-			'CREATE TRIGGER update_threads AFTER UPDATE ON threads BEGIN ' +
-				'UPDATE threads SET updated_at = CURRENT_TIMESTAMP WHERE thread_id = old.thread_id; ' +
+			'CREATE TRIGGER update_thread AFTER UPDATE ON threads BEGIN ' +
+				'UPDATE threads SET updated_at = CURRENT_TIMESTAMP WHERE thread_id = new.thread_id; ' +
+			'END',
+
+			'CREATE TABLE posts (' +
+				'post_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
+				'thread_id INTEGER NOT NULL, ' +
+
+				'poster_id INTEGER NOT NULL, ' +
+				'poster_name TEXT NOT NULL, ' +
+				
+				'message_bb TEXT NOT NULL, ' +
+				'post_color TEXT NOT NULL DEFAULT "#ffffff", ' +
+				
+				'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
+				'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
+				
+				'FOREIGN KEY (thread_id) REFERENCES threads(thread_id), ' +
+				'FOREIGN KEY (poster_id) REFERENCES characters(character_id))',
+
+			'CREATE TRIGGER create_post AFTER INSERT ON posts BEGIN ' +
+				'UPDATE threads SET last_poster_id = new.poster_id, last_poster_name = new.poster_name WHERE thread_id = new.thread_id; ' +
+			'END',
+
+			'CREATE TRIGGER update_post AFTER UPDATE ON posts BEGIN ' +
+				'UPDATE posts SET updated_at = CURRENT_TIMESTAMP WHERE post_id = new.post_id; ' +
 			'END'
 		];
 		callbackIter(seqCmds, 0, callback)();
 	};
+	*/
 
 	taskExports.createItemInstances = function(count, callback) {
 		db.all("SELECT * FROM item_blueprints", function(err, blueprints) {

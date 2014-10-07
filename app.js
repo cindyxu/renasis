@@ -16,7 +16,6 @@ var db = monk('localhost:27017/renasistest');
 
 var sqlite3 = require('sqlite3').verbose();
 var sqlitedb = new sqlite3.Database("sqldata/renasistest");
-var dbTasks = require('./db/tasks')(sqlitedb);
 
 var bcrypt = require('bcrypt');
 
@@ -28,6 +27,7 @@ var crypto = require('crypto');
 var debug = require('debug')('renasis');
 
 var _ = require('underscore');
+_.str = require('underscore.string');
 _.mixin({
 	findIndex : function(obj, iterator, context) {
 		var idx;
@@ -55,7 +55,9 @@ var utils = {
 
 utils.config = require('./config.js');
 utils.constants = require('./routes/helpers/constants');
-utils.schemas = require('./db/schemas.js');
+utils.schemas = require('./db/schemas.js')(utils);
+
+var dbTasks = require('./db/tasks')(utils);
 // nondependents
 utils.creationHelper = require('./routes/helpers/creation')(utils);
 
@@ -70,6 +72,15 @@ var user = require('./routes/user')(utils);
 var forum = require('./routes/forum')(utils);
 
 sqlitedb.serialize(function() {
+	dbTasks.clearTables(function() {
+		dbTasks.dropTables(function() {
+			dbTasks.createTables();
+		});
+	});
+});
+
+/*
+sqlitedb.serialize(function() {
 	dbTasks.recreateTables(function() {
 		dbTasks.populateItemBlueprints(function() {
 			dbTasks.populateSubforums(function() {
@@ -80,6 +91,7 @@ sqlitedb.serialize(function() {
 		});
 	});
 });
+*/
 
 var app = express();
 

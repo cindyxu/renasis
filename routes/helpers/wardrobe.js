@@ -29,6 +29,7 @@ module.exports = function(utils) {
 
 	// converts pose_str into an object
 	wardrobeHelper.parsePose = function(poseStr) {
+		if (!poseStr || poseStr.length === 0) return wardrobeHelper.parsePose(defaultPose);
 		var groupSegs = poseStr.split(';');
 		var pose = {};
 		_.each(groupSegs, function(seg) { 

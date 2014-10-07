@@ -24,7 +24,7 @@ block header-bar
 	#forum-actions
 		a#last-page(href='fake') <
 		a#next-page(href='fake') >
-		a#new-thread(href=subforum+'/new') +
+		a#new-thread(href=subforum.subforum_name + '/new') +
 
 block inner-content
 	- if (subforum)
