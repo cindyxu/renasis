@@ -180,7 +180,7 @@ module.exports = function(utils) {
 					"public", 
 					"images",
 					"items",
-					"clothing",
+					"equip",
 					blueprint.subcategory,
 					mout.string.underscore(blueprint.item_name), 
 					equip.variety,
@@ -202,7 +202,7 @@ module.exports = function(utils) {
 	wardrobeHelper.compAvatar = function(outfit, callback) {
 
 		// transparent + base
-		var buf = im(60, 100, "#ffffff00").in("-alpha", "Set");
+		var buf = im(80, 100, "#ffffff00").in("-alpha", "Set");
 
 		if (!_.isEmpty(outfit.layers)) {
 			debug("compositing outfit: ", outfit.outfitId);
@@ -243,7 +243,7 @@ module.exports = function(utils) {
 						debug("next layer order:", layerOrder);
 						db.run("INSERT INTO item_equips (item_id, item_alias, variety, outfit_id, layer, layer_order) VALUES " +
 						"($item_id, $item_alias, $variety, $outfit_id, $layer, $layer_order)", {
-						"$item_id" : itemObj.item_id,
+						"$item_id" : itemId,
 						"$item_alias" : itemObj.item_alias,
 						"$outfit_id" : outfitId,
 						"$variety" : newEquipDesc.variety,

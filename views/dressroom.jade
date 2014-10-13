@@ -17,6 +17,7 @@ mixin wardrobe-col()
 				li.hover-pointer= "top"
 				li.hover-pointer= "bottom"
 				li.hover-pointer= "feet"
+				li.hover-pointer= "hand"
 				li.hover-pointer= "back"
 			#wardrobe-inner
 				#subcategory-items
@@ -43,10 +44,10 @@ mixin equipped-layer(outfit, layerName)
 	- var layer = outfit.layers[layerName];
 	li.equipped-layer( id = "equipped-layer-" + layerName )
 		p.header= layerName
-		ul
-			- if (layer)
-				- for (var j = layer.length-1; j >= 0; j--)
-					mixin equipped-item(layer[j])
+			ul
+				- if (layer)
+					- for (var j = layer.length-1; j >= 0; j--)
+						mixin equipped-item(layer[j])
 
 mixin equipped-item(itemEquip)
 	li.equipped-item( id= "equipped-item-"+itemEquip.item_id,

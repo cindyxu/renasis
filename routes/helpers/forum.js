@@ -9,17 +9,13 @@ module.exports = function(utils) {
 
 	var forumHelper = {};
 
-	forumHelper.findSubforum = function(subforumTag, page, threadsPerPage, callback) {
-		debug("fetching subforum", subforumTag);
-		var tagStr;
-		if (isNaN(subforumTag)) tagStr = " WHERE subforums.subforum_name = ?";
-		else tagStr = " WHERE subforum_id = ?";
-
+	forumHelper.findSubforumWithThreads = function(subforumName, page, threadsPerPage, callback) {
+		debug("fetching subforum", subforumName);
 		db.all("SELECT * FROM subforums " +
-			"INNER JOIN threads ON threads.subforum_id = subforums.subforum_id" +
-			tagStr +
+			"INNER JOIN threads ON threads.subforum_name = subforums.subforum_name" +
+			"WHERE subforum_name = ?" +
 			" ORDER BY threads.updated_at DESC LIMIT ?, ?",
-			[subforumTag, ((page-1) * threadsPerPage), threadsPerPage], 
+			[subforumName, ((page-1) * threadsPerPage), threadsPerPage], 
 			function(err, rows) {
 				if (err) { console.log(err); callback(err); return; }
 				if (rows && rows.length > 0) {
@@ -28,7 +24,7 @@ module.exports = function(utils) {
 					callback(undefined, subforum);
 				}
 				else {
-					db.get("SELECT * FROM subforums " + tagStr, subforumTag, callback);
+					db.get("SELECT * FROM subforums WHERE subforum_name = ?", subforumName, callback);
 				}
 			}
 		);
@@ -36,38 +32,21 @@ module.exports = function(utils) {
 
 	forumHelper.findThreadWithPosts = function(threadId, startPosts, numPosts, callback) {
 		// get all posts on this page
-
 		db.all("SELECT * FROM threads INNER JOIN posts " +
-			"WHERE thread_id = ? ORDER BY posts.created_at LIMIT ?, ?",
+			"WHERE threads.thread_id = ? ORDER BY posts.created_at LIMIT ?, ?",
 			[threadId, startPosts, numPosts], function(err, rows) {
-
-			})
-
+				if (err) { console.log(err); callback(err); return; }
+				var thread = _.pick(rows[0], schemas.fields.threads);
+				thread.posts = rows;
+				callback(undefined, thread);
+			}
+		);
 	};
 
-	var _createThread = function(threadAlias, subforumTag, creatorId, creatorName, callback) {
+	var _createThread = function(threadAlias, subforumName, creatorId, creatorName, callback) {
 		var threadName = _str.slugify(threadAlias);
-
-		var createThreadInSubforum = function(subforumId, subforumName) {
-			db.run("INSERT INTO threads (thread_name, thread_alias, subforum_id, subforum_name, creator_id, creator_name) VALUES (?, ?, ?, ?, ?, ?)",
-			[threadName, threadAlias, subforumId, subforumName, creatorId, creatorName], callback);
-		};
-
-		if (isNaN(subforumTag)) {
-			db.get("SELECT subforum_id FROM subforums WHERE subforum_name = ?", 
-				subforumTag, function(err, subforumIdObj) {
-					if (err) { console.log(err); callback(err); return; }
-					createThreadInSubforum(subforumIdObj.subforum_id, subforumTag);
-				}
-			);
-		} else {
-			db.get("SELECT subforum_name FROM subforums WHERE subforum_id = ?", 
-				subforumTag, function(err, subforumNameObj) {
-					if (err) { console.log(err); callback(err); return; }
-					createThreadInSubforum(subforumTag, subforumNameObj.subforum_name);
-				}
-			);
-		}
+		db.run("INSERT INTO threads (thread_name, thread_alias, subforum_name, creator_id, creator_name) VALUES (?, ?, ?, ?, ?, ?)",
+		[threadName, threadAlias, subforumName, creatorId, creatorName], callback);
 	};
 
 	forumHelper.createPost = function(messageBB, threadId, posterId, posterName, callback) {
@@ -75,10 +54,10 @@ module.exports = function(utils) {
 			[messageBB, threadId, posterId, posterName], callback);
 	};
 
-	forumHelper.createThreadWithPost = function(threadAlias, subforumTag, messageBB, creatorId, creatorName, callback) {
-		debug("creating thread; name:", threadAlias, "post:", messageBB);
+	forumHelper.createThreadWithPost = function(threadAlias, messageBB, subforumName, creatorId, creatorName, callback) {
+		debug("creating thread; name:", threadAlias, "post:", messageBB, "by:", creatorName);
 		db.run("BEGIN TRANSACTION", function(err) {
-			_createThread(threadAlias, subforumTag, creatorId, function(err) {
+			_createThread(threadAlias, subforumName, creatorId, creatorName, function(err) {
 				if (err) { console.log(err); callback(err); return; }
 				var threadId = this.lastID;
 				forumHelper.createPost(messageBB, threadId, creatorId, creatorName, function(err) {

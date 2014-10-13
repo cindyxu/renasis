@@ -1,11 +1,10 @@
 extends layout
 
+block append links
+	script(src="/javascripts/xbbcode.js")
+	script(src="/javascripts/post_form_helper.js")
+	script(src="/javascripts/new_thread.js")
+
 block inner-content
-	form#new-thread(method="post")
-		.field
-			label Title
-			input(name="thread-alias")
-		.field
-			label Post
-			textarea(name="post-message-bb")
-		button#submit-thread Submit
+	- var context = "new-thread";
+	include ./includes/new_post_form.jade

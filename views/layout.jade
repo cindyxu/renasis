@@ -8,22 +8,23 @@ html
 			link(rel='stylesheet', href='/stylesheets/xbbcode.css')
 	body
 		#content
-			#nav-bar
-				ul
-					li
-						img(src="/images/testout.png")
-					li.nav-item
-						a(href="fake") HOME
-					li.nav-item
-						a(href="fake") PROFILE
-					li.nav-item
-						a(href="fake") FORUMS
-					li.nav-item
-						a(href="fake") TOWNS
-					li.nav-item
-						a(href="fake") HELLO
-			#right-column
-				#header-bar
-					block header-bar
-				#inner-content
-					block inner-content
+			block content
+				#nav-bar
+					ul
+						li
+							img(src="/images/testout.png")
+						li.nav-item
+							a(href="fake") HOME
+						li.nav-item
+							a(href="fake") PROFILE
+						li.nav-item
+							a(href="fake") FORUMS
+						li.nav-item
+							a(href="fake") TOWNS
+						li.nav-item
+							a(href="fake") HELLO
+				#right-column
+					#header-bar
+						block header-bar
+					#inner-content
+						block inner-content

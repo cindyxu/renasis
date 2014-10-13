@@ -21,7 +21,7 @@ $nav-bar-width = 140px
 $std-margin-side = 2rem
 $header-bar-height = 4rem
 
-$preview-width = 130px
+$preview-width = 170px
 $preview-height = 220px
 
 $wardrobe-tab-height = 1.3rem
@@ -55,6 +55,7 @@ post()
 	border-bottom: 1px solid $cocoa
 	border-radius 15px
 	min-height: 100px
+	min-width: 400px
 	font-size: 12px
 	img.post-emote
 		margin: 0 2px
@@ -114,40 +115,71 @@ body, html
 		background-color: rgba(255,255,255,0.2)
 		.post
 			margin-left: $avatar-width
-			margin-right: 1rem
+			margin-right: 30%
 		.avatar
 			left: 2rem
 
 	&.right
 		.post
 			margin-right: $avatar-width
-			margin-left: 1rem
+			margin-left: 30%
 		.avatar
 			right: 2rem
+	
+	&#new-post
+		&.append-thread
+			bottom: -100%
+			padding-left: $nav-bar-width
+			position: fixed
+			width: 100%
+			background-color: $dark-brown
+			&.right
+				.post
+					margin-left: 1rem
+			&.left
+				.post
+					margin-right: 1rem
 
-#post-emotes
-	a
-		margin: 0 2px
-		img
-			position: relative
-			&:hover
-				bottom: 2px
+		&.new-thread
+			.post
+				margin-left: $avatar-width
 
-form#new-post-form
-	textarea#new-post-message-bb
+form#post-form
+	#post-emotes
+		margin: 0.5rem 0
+		a
+			outline: 0
+			img
+				position: relative
+				padding: 3px 3px
+				border-radius(6px)
+				&:hover
+					background-color: #ffff99
+	text-align: left
+	#thread-alias
+		border-width: 0
+		border-top: 1px solid $dim-tan
+		border-left: 1px solid $tan
+		border-right: 1px solid $tan
+		border-bottom: 1px solid $pale-tan
+		padding: 5px
+		width: 100%
+	textarea#message-bb
 		width: 100%
 		min-height: 10rem
 		border-width: 0
 		border-top: 1px solid $dim-tan
 		border-left: 1px solid $tan
+		border-bottom: 1px solid $pale-tan
 		border-right: 1px solid $tan
 		border-radius 15px
 		padding: 15px
 		outline: 0
 		font-size: 12px
 		font-family: "Ayuthaya"
-	#new-post-preview
+	#post-preview-section
 		display: none
+		padding: 2rem 0
 
 .link-med
 	font-size: 1.5rem
@@ -208,7 +240,7 @@ a:link
 #inner-content
 	height: 100%
 	padding-top: $header-bar-height
-	overflow-y: scroll
+	overflow-y: auto
 
 form#login
 	background-color: rgba($deep-brown,0.7)
@@ -365,7 +397,7 @@ ul
 	#subcategory-items
 		background-color: white
 		height: 100%
-		overflow-y: scroll
+		overflow-y: auto
 		border-radius: 0 0 10px 10px
 		text-align: left
 		padding: 0.5rem
@@ -392,8 +424,10 @@ ul
 				color: white
 				padding: 0.1rem
 			ul
-				overflow-y: scroll
+				min-height: 0.5rem
+				overflow-y: auto
 				background-color: white
+				max-height: 9rem
 	.equipped-item
 		border-bottom: 1px solid $pale-tan
 		position: relative

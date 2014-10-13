@@ -111,9 +111,7 @@ module.exports = function(utils) {
 			else {
 				db.run("INSERT INTO users (username, password_hash) VALUES (?, ?)", 
 					[username, hash], function(err) {
-						if (username === "god") {
-							db.run("UPDATE items SET user_id = ?", this.lastID, callback);
-						}
+						if (err) console.log(err);
 						else {
 							callback(err);
 						}

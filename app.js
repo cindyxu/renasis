@@ -56,6 +56,10 @@ var utils = {
 utils.config = require('./config.js');
 utils.constants = require('./routes/helpers/constants');
 utils.schemas = require('./db/schemas.js')(utils);
+utils.itemCatalogue = require('./db/item_catalogue.js');
+utils.skillCatalogue = require('./db/skill_catalogue.js');
+utils.creatureCatalogue = require('./db/creature_catalogue.js');
+utils.forumCatalogue = require('./db/forum_catalogue.js');
 
 var dbTasks = require('./db/tasks')(utils);
 // nondependents
@@ -72,26 +76,26 @@ var user = require('./routes/user')(utils);
 var forum = require('./routes/forum')(utils);
 
 sqlitedb.serialize(function() {
-	dbTasks.clearTables(function() {
-		dbTasks.dropTables(function() {
-			dbTasks.createTables();
-		});
-	});
-});
-
-/*
-sqlitedb.serialize(function() {
 	dbTasks.recreateTables(function() {
-		dbTasks.populateItemBlueprints(function() {
-			dbTasks.populateSubforums(function() {
-				dbTasks.createItemInstances(1, function() {
-					dbTasks.createGod(utils.userHelper);
-				});
+		dbTasks.populateSkills(function() {
+			dbTasks.populateCreatureBlueprints(function() {
+				dbTasks.populateItemBlueprints(function() {
+					delete utils.itemCatalogue;
+					delete utils.skillsCatalogue;
+					delete utils.creatureCatalogue;
+					console.log("DONE");
+					dbTasks.populateForums(function() {
+						dbTasks.createItemInstances(1, function() {
+
+							dbTasks.createGod(utils.userHelper);
+						});
+					});
+				});	
 			});
 		});
 	});
 });
-*/
+
 
 var app = express();
 

@@ -170,9 +170,7 @@ var shiftItemClientSide = function(itemId, predItemId, equippedItem, predEquippe
 	// we just need to change the layer orders
 	equippedItem = equippedItem || $("li#equipped-item-" + itemId);
 	if (predItemId) predEquippedItem = predEquippedItem || $("li#equipped-item-" + predItemId);
-
 	console.log("inserted item", equippedItem.attr("data-item-name"), "above", predEquippedItem.attr("data-item-id"));
-
 	var layerOrder = parseInt(equippedItem.attr("data-item-layer-order"));
 	var newLayerOrder;
 	if (predEquippedItem && predEquippedItem.length > 0) newLayerOrder = parseInt(predEquippedItem.attr("data-item-layer-order")) + 1;
@@ -222,26 +220,6 @@ var shiftItemServerSideRequest = function(itemId, predItemId) {
 		});
 	};
 };
-
-/*
-var updateEquippedList = function(changed) {
-	if (changed.inserted) {
-		$.each(changed.inserted, function(insertedItem) {
-			insertItemListingFromChanges(insertedItem);
-			$("#equipped-item-" + insertedItem.item_id).attr("data-item-in-outfit", "true");
-		});
-	}
-	if (changed.removed) {
-		$.each(changed.removed, function(removedItem) {
-			$("#equipped-item-" + removedItem.item_id).remove();
-			$(".wardrobe-item[data-item-id=" + removedItem.item_id + "]").removeAttr("data-item-in-outfit");
-		});
-	}
-	$.each(changed.layer_orders, function reorderedItem) {
-		$("li.equipped-item[data-item-id" + reorderedItem.item_id + "]").attr("data-item-layer-order", reorderedItem.layer_order);
-	});
-};
-*/
 
 $(function() {
 

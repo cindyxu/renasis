@@ -11,15 +11,15 @@ mixin post(postObj, lr)
 			a(href="fake")
 				img(src='images/bunny.png')
 			a(href="fake")
-				img(src='images/bunny.png')
 		div.post
-			p= postObj.message
+			p.post-message= postObj.message_bb
 		- if (lr === "right")
 			.avatar
 				img(src="/images/testout.png")
 
 block append links
 	script(src="/javascripts/xbbcode.js")
+	script(src="/javascripts/post_form_helper.js")
 	script(src="/javascripts/thread.js")
 
 block header-bar
@@ -27,11 +27,17 @@ block header-bar
 		#thread-desc
 			= thread.title
 		#thread-actions
-			a#new-post(href=subforum+"/new") Post
+			a#new-post-button(href=subforum+"/new") Post
 			a Like
 			a Report
 
 block inner-content
-	- for (var i = 0; i < thread.posts.length; i++)
-		- var lr = (i%2 === 0 ? "left" : "right");
-		mixin post(thread.posts[i], lr)
+	#thread
+		- var postCount = thread.posts.length;
+		- for (var i = 0; i < postCount; i++)
+			- var lr = (i%2 === 0 ? "left" : "right");
+			mixin post(thread.posts[i], lr)
+
+block append content
+	- var context = "append-thread";
+	include ./includes/new_post_form.jade

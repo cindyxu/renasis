@@ -45,28 +45,28 @@ module.exports = function(utils) {
 		_.each(Object.keys(schemas.models), function(modelName) {
 			var createCmd = [];
 			var model = schemas.models[modelName];
+			var foreignKeyAttrs, fieldAttrs;
 
 			createCmd.push("CREATE TABLE " + modelName + " (");
 
-			if (model.primaryKey) {
-				var primaryKeyArr = model.primaryKey;
-				createCmd.push(primaryKeyArr[0] + " " + primaryKeyArr[1] + " PRIMARY KEY" + 
-					(primaryKeyArr[2] ? " " + _str.join(" ", primaryKeyArr[2]) : "") + 
-					(primaryKeyArr[3] ? " DEFAULT " + primaryKeyArr[3] : "") + ",");
-			}
-
 			for (var field in model.fields) {
-				var fieldAttrs = model.fields[field];
-				createCmd.push(field + " " + fieldAttrs[0] + 
-					(fieldAttrs[1] ? " " + _str.join(" ", fieldAttrs[1]) : "") +
-					(fieldAttrs[2] ? " DEFAULT " + fieldAttrs[2] : "") + ",");
+				fieldAttrs = model.fields[field];
+				if (_.contains(fieldAttrs.constraints, "PRIMARY KEY")) {
+					model.primaryKey = field;
+				}
+				createCmd.push(field + " " + fieldAttrs.type + 
+					(fieldAttrs.constraints !== undefined ? " " + _str.join(" ", fieldAttrs.constraints) : "") +
+					(fieldAttrs["default"] !== undefined ? " DEFAULT " + fieldAttrs["default"] : "") + ",");
 			}
 
 			for (var foreignKey in model.foreignKeys) {
-				var foreignKeyArr = model.foreignKeys[foreignKey];
-				createCmd.push(foreignKey + " " + foreignKeyArr[0] +
-					(foreignKeyArr[3] ? " " + _str.join(" ", foreignKeyArr[3]) : "") + 
-					(foreignKeyArr[4] ? " DEFAULT " + foreignKeyArr[4] : "") + ",");
+				foreignKeyAttrs = model.foreignKeys[foreignKey];
+				if (_.contains(foreignKeyAttrs.constraints, "PRIMARY KEY")) {
+					model.primaryKey = field;
+				}
+				createCmd.push(foreignKey + " " + foreignKeyAttrs.type +
+					(foreignKeyAttrs.constraints !== undefined ? " " + _str.join(" ", foreignKeyAttrs.constraints) : "") + 
+					(foreignKeyAttrs["default"] !== undefined ? " DEFAULT " + foreignKeyAttrs["default"] : "") + ",");
 			}
 
 			if (model.timestamps) {
@@ -76,7 +76,7 @@ module.exports = function(utils) {
 
 			for (foreignKey in model.foreignKeys) {
 				foreignKeyAttrs = model.foreignKeys[foreignKey];
-				createCmd.push( "FOREIGN KEY (" + foreignKey + ") REFERENCES " + foreignKeyAttrs[1] + "(" + foreignKeyAttrs[2] + ")," );
+				createCmd.push( "FOREIGN KEY (" + foreignKey + ") REFERENCES " + foreignKeyAttrs.table + "(" + foreignKeyAttrs.on + ")," );
 			}
 
 			if (model.triggers || model.timestamps) {
@@ -94,7 +94,7 @@ module.exports = function(utils) {
 			if (model.timestamps) {
 				triggers.INSERT.AFTER.push(
 					"UPDATE " + modelName + " SET updated_at = CURRENT_TIMESTAMP " +
-					"WHERE " + model.primaryKey[0] + " = new." + model.primaryKey[0]);
+					"WHERE " + model.primaryKey + " = new." + model.primaryKey);
 			}
 
 			for (var action in model.triggers) {
@@ -105,9 +105,9 @@ module.exports = function(utils) {
 					triggerCmd.push("CREATE TRIGGER " + 
 						prec.toLowerCase() + "_" + action.toLowerCase() + "_" + modelName + " " +
 						prec + " " + action + " ON " + modelName + " BEGIN");
-					_.each(triggerArr, function(tl) {
-						triggerCmd.push(tl + ";");
-					});
+					for (var tl in triggerArr) {
+						triggerCmd.push(triggerArr[tl] + ";");
+					}
 					triggerCmd.push("END");
 					createCmds.push(triggerCmd);
 				}
@@ -116,204 +116,22 @@ module.exports = function(utils) {
 
 		for (var c in createCmds) {
 			createCmds[c] = _str.join("\n", createCmds[c]);
-			console.log(createCmds[c]);
+			// console.log(createCmds[c]);
+			// console.log("");
 		}
-		console.log("");
 
 		callbackIter(createCmds, 0, callback)();
 	};
 
-	/*
 	taskExports.recreateTables = function(callback) {
-
-		var seqCmds = [
-			'DELETE FROM preferences',
-			'DELETE FROM users',
-			'DELETE FROM characters',
-			'DELETE FROM outfits',
-			'DELETE FROM items',
-			'DELETE FROM item_equip_options',
-			'DELETE FROM item_equips',
-			'DELETE FROM item_blueprints',
-			'DELETE FROM threads',
-			'DELETE FROM subforums',
-			'DELETE FROM posts',
-
-			'DROP TABLE item_equips',
-			'DROP TABLE outfits',
-			'DROP TABLE item_equip_options',
-			'DROP TABLE items',
-			'DROP TABLE item_blueprints',
-			'DROP TABLE characters',
-			'DROP TABLE preferences',
-			'DROP TABLE users',
-			'DROP TABLE threads',
-			'DROP TABLE subforums',
-			'DROP TABLE posts',
-
-			'CREATE TABLE users (' +
-				'user_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'username TEXT NOT NULL UNIQUE, ' +
-				'password_hash TEXT NOT NULL, ' +
-				'primary_character_id INTEGER, ' +
-				
-				'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-				'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-
-				'FOREIGN KEY (primary_character_id) REFERENCES characters(character_id))',
-
-			'CREATE TRIGGER update_user AFTER UPDATE ON users BEGIN ' +
-				'UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE user_id = new.user_id; ' +
-			'END', 
-
-			'CREATE TABLE preferences (' +
-				'preferences_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'user_id INTEGER NOT NULL, ' +
-				'sound_music_level REAL NOT NULL DEFAULT 0, ' +
-				'sound_fx_level REAL NOT NULL DEFAULT 0, ' +
-				'threads_per_page INTEGER NOT NULL DEFAULT 30, ' +
-				'posts_per_page INTEGER NOT NULL DEFAULT 15, ' +
-				'FOREIGN KEY (user_id) REFERENCES users(user_id))',
-
-			'CREATE TRIGGER create_user AFTER INSERT ON users BEGIN ' +
-				'INSERT INTO preferences (user_id) VALUES (new.user_id); ' + 
-			'END',
-
-			'CREATE TABLE characters (' +
-				'character_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'character_name TEXT NOT NULL, ' +
-				'user_id INTEGER NOT NULL, ' +
-				'wip_outfit_id INTEGER, ' +
-				'current_outfit_id INTEGER, ' +
-				
-				'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-				'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-
-				'FOREIGN KEY (user_id) REFERENCES users(user_id), ' +
-				'FOREIGN KEY (wip_outfit_id) REFERENCES outfits(outfit_id), ' +
-				'FOREIGN KEY (current_outfit_id) REFERENCES outfits(outfit_id))',
-
-			'CREATE TRIGGER create_character AFTER INSERT ON characters BEGIN ' +
-				// if user doesn't have primary character, set to this
-				'UPDATE users SET primary_character_id = new.character_id WHERE user_id = new.user_id AND primary_character_id = NULL; ' +
-				// create a wip outfit for this character
-				'INSERT INTO outfits (user_id, character_id, outfit_name, pose_str) VALUES (new.user_id, new.character_id, "wip", "' + defaultPose + '");' +
-				'UPDATE characters SET wip_outfit_id = last_insert_rowid();' +
-			'END',
-
-			'CREATE TRIGGER update_character AFTER UPDATE ON characters BEGIN ' +
-				'UPDATE characters SET updated_at = CURRENT_TIMESTAMP WHERE character_id = new.character_id; ' +
-			'END', 
-
-			'CREATE TABLE outfits (' +
-				'outfit_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'user_id INTEGER NOT NULL, ' +
-				'character_id INTEGER, ' +
-				'outfit_name TEXT NOT NULL, ' +
-				'pose_str TEXT NOT NULL, ' +
-
-				'FOREIGN KEY (user_id) REFERENCES users(user_id), ' +
-				'FOREIGN KEY (character_id) REFERENCES characters(character_id))',
-
-			'CREATE TABLE item_blueprints (' +
-				'item_blueprint_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'item_alias TEXT NOT NULL UNIQUE, ' +
-				'item_name TEXT NOT NULL UNIQUE, ' +
-				'category TEXT NOT NULL, ' +
-				'subcategory TEXT NOT NULL)',
-
-			'CREATE TABLE items (' +
-				'item_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'item_alias TEXT NOT NULL, ' +
-				'item_blueprint_id INTEGER NOT NULL, ' +
-				'user_id INTEGER, ' +
-				'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-				'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-
-				'FOREIGN KEY (user_id) REFERENCES users(user_id), ' +
-				'FOREIGN KEY (item_blueprint_id) REFERENCES item_blueprints(item_blueprint_id))',
-
-			'CREATE TRIGGER update_item AFTER UPDATE ON items BEGIN ' +
-				'UPDATE items SET updated_at = CURRENT_TIMESTAMP WHERE item_id = new.item_id; ' +
-			'END', 
-
-			'CREATE TABLE item_equip_options (' +
-				'item_blueprint_id INTEGER PRIMARY KEY, ' +
-				'varieties TEXT NOT NULL, ' +
-				'poses_str TEXT NOT NULL, ' +
-
-				'FOREIGN KEY (item_blueprint_id) REFERENCES item_blueprints(item_blueprint_id))',
-
-			'CREATE TABLE item_equips (' +
-				'item_equip_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'item_id INTEGER NOT NULL, ' +
-				'outfit_id TEXT NOT NULL, ' +
-				'item_alias TEXT NOT NULL, ' +
-				'variety TEXT NOT NULL, ' +
-				'layer TEXT NOT NULL, ' +
-				'layer_order INTEGER NOT NULL, ' +
-
-				'FOREIGN KEY (item_id) REFERENCES items(item_id), ' +
-				'FOREIGN KEY (outfit_id) REFERENCES outfits(outfit_id))',
-
-			'CREATE TABLE subforums (' +
-				'subforum_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'subforum_name TEXT NOT NULL, ' +
-				'subforum_alias TEXT NOT NULL)',
-
-			'CREATE TABLE threads (' +
-				'thread_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'thread_name TEXT NOT NULL, ' +
-				'thread_alias TEXT NOT NULL, ' +
-
-				'creator_id INTEGER NOT NULL, ' +
-				'creator_name TEXT NOT NULL, ' +
-				
-				'last_poster_id INTEGER, ' +
-				'last_poster_name TEXT, ' +
-				
-				'subforum_id INTEGER NOT NULL, ' +
-				'subforum_name TEXT NOT NULL, ' +
-				
-				'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-				'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-
-				'FOREIGN KEY (subforum_id) REFERENCES subforums(subforum_id), ' +
-				'FOREIGN KEY (creator_id) REFERENCES characters(character_id), ' +
-				'FOREIGN KEY (last_poster_id) REFERENCES characters(character_id))',
-
-			'CREATE TRIGGER update_thread AFTER UPDATE ON threads BEGIN ' +
-				'UPDATE threads SET updated_at = CURRENT_TIMESTAMP WHERE thread_id = new.thread_id; ' +
-			'END',
-
-			'CREATE TABLE posts (' +
-				'post_id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
-				'thread_id INTEGER NOT NULL, ' +
-
-				'poster_id INTEGER NOT NULL, ' +
-				'poster_name TEXT NOT NULL, ' +
-				
-				'message_bb TEXT NOT NULL, ' +
-				'post_color TEXT NOT NULL DEFAULT "#ffffff", ' +
-				
-				'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-				'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ' +
-				
-				'FOREIGN KEY (thread_id) REFERENCES threads(thread_id), ' +
-				'FOREIGN KEY (poster_id) REFERENCES characters(character_id))',
-
-			'CREATE TRIGGER create_post AFTER INSERT ON posts BEGIN ' +
-				'UPDATE threads SET last_poster_id = new.poster_id, last_poster_name = new.poster_name WHERE thread_id = new.thread_id; ' +
-			'END',
-
-			'CREATE TRIGGER update_post AFTER UPDATE ON posts BEGIN ' +
-				'UPDATE posts SET updated_at = CURRENT_TIMESTAMP WHERE post_id = new.post_id; ' +
-			'END'
-		];
-		callbackIter(seqCmds, 0, callback)();
+		taskExports.clearTables(function() {
+			taskExports.dropTables(function() {
+				taskExports.createTables(callback);
+			});
+		});
 	};
-	*/
 
+	// todo: items will get alias set automatically, so no need to assign it manually
 	taskExports.createItemInstances = function(count, callback) {
 		db.all("SELECT * FROM item_blueprints", function(err, blueprints) {
 			var query = "INSERT INTO items (item_blueprint_id, item_alias) VALUES ";
@@ -331,134 +149,242 @@ module.exports = function(utils) {
 
 	taskExports.createGod = function(userHelper, callback) {
 		userHelper.createUser("god", "1", function(err) {
+			if (err) console.log(err);
 			db.get("SELECT * FROM users WHERE username = ?", "god", function(err, userObj) {
-				userHelper.createCharacterForUser("chis", userObj, function(err) {
-					if (err) { console.log(err); return; }
-					if (callback) callback();
+				if (err) console.log(err);
+				db.run("UPDATE items SET user_id = ?", userObj.user_id, function(err) {
+					userHelper.createCharacterForUser("chis", userObj, function(err) {
+						if (err) { console.log(err); return; }
+						if (callback) callback();
+					});
 				});
 			});
 		});
 	};
 
-	taskExports.populateSubforums = function(callback) {
-		db.run('INSERT INTO subforums (subforum_name, subforum_alias) VALUES ' +
-			'("teatyme", "Teatyme"), ' +
-			'("wilds", "Wilds")',
-		function(err) {
+	taskExports.populateForums = function(callback) {
+
+		var forumCatalogue = utils.forumCatalogue;
+
+		var addEncounters = function(subforum, callback) {
+			var valuesStr = '';
+			for (var ei in subforum.encounters) {
+				var encounter = subforum.encounters[ei];
+				valuesStr += '(' + encounter.chance + 
+					', "' + subforum.subforum_name + '", ' + 
+					(encounter.creature_id || 'NULL') + ', ' +
+					(encounter.item_blueprint_id || 'NULL') +
+					(ei < subforum.encounters.length - 1 ? '), ' : ')');
+			}
+			db.run('INSERT INTO encounters (chance, subforum_name, creature_id, item_blueprint_id) VALUES ' +
+				valuesStr, function(err) {
+					if (err) { console.log(err); return; }
+					callback();
+				}
+			);
+		};
+
+		var addSubforumChain = function(forum, si, callback) {
+			var subforum = forum.subforums[si];
+			if (!subforum) { return callback(); }
+			db.run('INSERT INTO subforums (subforum_name, subforum_alias, forum_name, forum_alias) VALUES (?, ?, ?, ?)',
+				[subforum.subforum_name, subforum.subforum_alias, forum.forum_name, forum.forum_alias], function(err) {
+					if (err) { console.log(err); return; }
+					addEncounters(subforum, function(err) {
+						addSubforumChain(forum, si+1, callback);
+					});
+				}
+			);
+		};
+
+		var forumKeys = Object.keys(forumCatalogue);
+
+		var addForumChain = function(fi, callback) {
+			if (!forumKeys[fi]) { return callback(); }
+			var forum = forumCatalogue[forumKeys[fi]];
+			forum.forum_name = forumKeys[fi];
+			db.run('INSERT INTO forums (forum_name, forum_alias) VALUES (?, ?)',
+				[forum.forum_name, forum.forum_alias], function(err) {
+					addSubforumChain(forum, 0, function(err) {
+						addForumChain(fi+1, callback);
+					});		
+				}
+			);
+		};
+
+		addForumChain(0, callback);
+	};
+
+	taskExports.populateSkills = function(callback) {
+		var skills = utils.skillCatalogue;
+		var addSkill = function(i) {
+			if (!skills[i]) { callback(); return; }
+			var skill = skills[i];
+			db.run('INSERT INTO skills (skill_name, skill_alias, active) VALUES (?, ?, ?)',
+				[skill.skill_name, skill.skill_alias, skill.active], function(err) {
+					if (err) { console.log(err); return; }
+					var skillId = this.lastID;
+					var bg = skill.battle_stat_growths;
+					db.run('INSERT INTO battle_stat_growths (skill_id, str, vit, dex, agi, mag, degrade) ' +
+						'VALUES (?, ?, ?, ?, ?, ?, ?)', [skillId, bg.str, bg.vit, bg.dex, bg.agi, bg.mag, bg.degrade],
+						function(err) {
+							if (err) { console.log(err); return; }
+							addSkill(i+1);
+						}
+					);
+				}
+			);
+		};
+		addSkill(0);
+	};
+
+	taskExports.populateCreatureBlueprints = function(callback) {
+		var creatures = utils.creatureCatalogue;
+		var query = 'INSERT INTO creature_blueprints (creature_name, creature_alias) VALUES ';
+		for (var i = 0; i < creatures.length; i++) {
+			query += '("' + creatures[i].creature_name + '", "' + creatures[i].creature_alias +
+				(i < creatures.length - 1 ? '") ' : '")');
+		}
+		db.run(query, function(err) {
 			if (err) { console.log(err); return; }
-			if (callback) callback();
+			callback();
 		});
 	};
 
 	taskExports.populateItemBlueprints = function(callback) {
-		var itemVarieties = [];
-		var itemPoseStrs = [];
-
-		//fox ears
-		itemVarieties.push("red");
-		itemPoseStrs.push("head:(0:32,34);" +
-			"behind:(0:12,34)");
-
-		//human1
-		itemVarieties.push("human1");
-		itemPoseStrs.push("arm_above:(0:31,63);" +
-			"head:(0:15,38);" +
-			"torso:(0:21,60);" +
-			"leg_behind:(0:18,75);" +
-			"arm_behind:(0:17,63);" +
-			"leg_above:(0:28,76)");
-
-		//jeans
-		itemVarieties.push("navy");
-		itemPoseStrs.push("leg_above:(0:20,76)");
-
-		//mermaid
-		itemVarieties.push("aquamarine");
-		itemPoseStrs.push("head:(0:8,35)");
-
-		//miko
-		itemVarieties.push("pink");
-		itemPoseStrs.push("head:(0:10,37);" +
-			"behind:(0:13,36)");
-
-		//roses
-		itemVarieties.push("red");
-		itemPoseStrs.push("head:(0:31,37);" +
-			"behind:(0:12,37)");
-
-		//shirt
-		itemVarieties.push("black");
-		itemPoseStrs.push("arm_above:(0:30,64);" +
-			"leg_above:(0:20,65);" +
-			"arm_behind:(0:21,64)");
-
-		//sneakers
-		itemVarieties.push("red");
-		itemPoseStrs.push("leg_above:(0:18,87)");
-
-		//static
-		itemVarieties.push("blue,black");
-		itemPoseStrs.push("head:(0:12,35)");
-
-		//sweater
-		itemVarieties.push("salmon");
-		itemPoseStrs.push("arm_above:(0:23,63);" +
-			"leg_above:(0:20,67);" +
-			"arm_behind:(0:17,67)");
-
-		//tank top
-		itemVarieties.push("teal");
-		itemPoseStrs.push("arm_above:(0:25,63);" +
-			"leg_above:(0:20,67)");
+		var itemCatalogue = utils.itemCatalogue;
 		
-		//unimpressed
-		itemVarieties.push("yellow");
-		itemPoseStrs.push("head:(0:18,50)");
-		
-		//wings
-		itemVarieties.push("periwinkle");
-		itemPoseStrs.push("back:(0:8,42)");
+		var skillIds = {};
 
-		var insertBlueprints = function() {
+		var addItemBlueprint = function(category, subcategory, item, callback) {
+			var isEquippable = schemas.definitions.item_blueprints.isEquippable(category);
+			var query = 'INSERT INTO item_blueprints (item_alias, item_name, category, subcategory) VALUES ("' +
+				item.item_alias + '", "' + item.item_name + '", "' + category + '", "' + subcategory + '")';
+			db.run(query, function(err) {
+					if (err) { console.log("error adding blueprint", err); return; }
+					var itemBlueprintId = this.lastID;
+					if (item.equip_options) {
+						var query = 'INSERT INTO item_equip_options (item_blueprint_id, varieties, poses_str) VALUES (' +
+							itemBlueprintId + ', "' + item.equip_options.varieties + '", "' + item.equip_options.poses_str + '")';
+						db.run(query,
+							function(err) {
+								if (err) { console.log("error inserting item equip option", err); return; }
+								if (item.battlegear) {
+									addBattlegearBlueprint(item.battlegear, itemBlueprintId, callback);
+								} else {
+									callback();
+								}
+							}
+						);
+					} else {
+						callback();
+					}
+				}
+			);
+		};
 
-			// THIS LIST MUST BE ORDERED BY item_name
-			db.run('INSERT INTO item_blueprints (item_name, item_alias, category, subcategory) VALUES ' +
-				'("fox_ears", "Fox ears", "clothing", "head"), ' +
-				'("human1", "Human1", "clothing", "base"), ' +
-				'("jeans", "Jeans", "clothing", "bottom"), ' +
-				'("mermaid", "Mermaid hair", "clothing", "hair"), ' +
-				'("miko", "Miko hair", "clothing", "hair"), ' +
-				'("roses", "Roses", "clothing", "head"), ' +
-				'("shirt", "Shirt", "clothing", "top"), ' +
-				'("sneakers", "Sneakers", "clothing", "feet"), ' +
-				'("static", "Static hair", "clothing", "hair"), ' +
-				'("sweater", "Sweater", "clothing", "top"), ' +
-				'("tank_top", "Tank top", "clothing", "top"), ' +
-				'("unimpressed", "Unimpressed face", "clothing", "face"), ' +
-				'("wings", "Wings", "clothing", "back")', function(err) {
-					if (err) console.log(err);
-					db.all("SELECT item_blueprint_id, item_name FROM item_blueprints ORDER BY item_name", function(err, blueprints) {
-						var itemsFinished = 0;
-						if (err) console.log(err);
-						for (var i = 0; i < blueprints.length; i++) {
-							db.run("INSERT INTO item_equip_options (item_blueprint_id, varieties, poses_str) VALUES ($itemBlueprintId, $varieties, $posesStr)", {
-								"$itemBlueprintId": blueprints[i].item_blueprint_id,
-								"$varieties": itemVarieties[i],
-								"$posesStr": itemPoseStrs[i] }, function() {
-									itemsFinished++;
-									if (itemsFinished === blueprints.length) {
-										if (callback) callback();
-									}
-								});
-						}	
-					});
+		var insertCarrierSkills = function(battlegear, battlegearId, f, callback) {
+			var skillsCached = true;
+			var skillNames = battlegear.skills;
+			var query;
+			if (!f) {
+				for (var si in skillNames) {
+					if (!skillIds[skillNames[si]]) {
+						skillsCached = false;
+						break;
+					}
+				}
+			}
+
+			if (!skillsCached) {
+				query = 'SELECT skill_id, skill_name FROM skills WHERE skill_name in ("' + _str.join('", "', skillNames) + '")';
+				db.all(query, function(err, skillObjs) {
+					if (err) { console.log("error getting skill", err); return; }
+					for (var soi in skillObjs) {
+						var skillObj = skillObjs[soi];
+						skillIds[skillObj.skill_name] = skillObj.skill_id;
+					}
+					insertCarrierSkills(battlegear, battlegearId, true, callback);
+				});
+				return;
+			}
+
+			query = "INSERT INTO carriers_skills (battlegear_blueprint_id, skill_id) VALUES " + 
+				_str.join(', ', _.map(skillNames, function(sn) {
+					return '(' + battlegearId + ', ' + skillIds[sn] + ')';
+			}));
+			db.run(query, function(err) {
+					if (err) { console.log("error adding carrier skill", err); return; }
+					callback();
+				}
+			);
+		};
+
+		var addBattlegearBlueprint = function(battlegear, itemBlueprintId, callback) {
+
+			var query = 'INSERT INTO battlegear_blueprints (item_blueprint_id, ' +
+				'str_base, vit_base, dex_base, agi_base, mag_base, ' +
+				'str_mult, vit_mult, dex_mult, agi_mult, mag_mult) VALUES (' +
+				itemBlueprintId + ', ' +
+				battlegear.str_base + ', ' +
+				battlegear.vit_base + ', ' +
+				battlegear.dex_base + ', ' +
+				battlegear.agi_base + ', ' +
+				battlegear.mag_base + ', ' +
+
+				battlegear.str_mult + ', ' +
+				battlegear.vit_mult + ', ' +
+				battlegear.dex_mult + ', ' +
+				battlegear.agi_mult + ', ' +
+				battlegear.mag_mult + ')';
+
+			db.run(query, function(err) {
+					if (err) { console.log("error inserting battlegear", err); return; }
+					var battlegearId = this.lastID;
+					insertCarrierSkills(battlegear, battlegearId, false, callback);
+				}
+			);
+		};
+
+		var ci = 0;
+		var categoryKeys = Object.keys(itemCatalogue);
+		var category = categoryKeys[ci];
+		var citems = itemCatalogue[category];
+		var sci = 0;
+		var subcategoryKeys = Object.keys(citems);
+		var subcategory = subcategoryKeys[sci];
+		var scitems = citems[subcategoryKeys[sci]];
+		var scii = 0;
+		var item = scitems[scii];
+
+		var iterBlueprints = function() {
+			console.log(category, subcategory, item.item_name);
+			addItemBlueprint(category, subcategory, item, function() {
+				scii++;
+				if (scii >= scitems.length) {
+					sci++;
+					scii = 0;
+					if (sci >= subcategoryKeys.length) {
+						sci = 0;
+						ci++;
+						if (ci >= categoryKeys.length) {
+							callback();
+							return;
+						}
+						category = categoryKeys[ci];
+						citems = itemCatalogue[category];
+						subcategoryKeys = Object.keys(citems);
+
+					}
+					subcategory = subcategoryKeys[sci];
+					scitems = citems[subcategory];
+				}
+
+				item = scitems[scii];
+				iterBlueprints();
 			});
 		};
-		db.run('DELETE * from item_blueprints', function() {
-			db.run('DELETE * from item_equip_options', function() {
-				insertBlueprints();
-			});
-		});
+		iterBlueprints();
 	};
 
 	return taskExports;
