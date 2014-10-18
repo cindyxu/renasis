@@ -7,10 +7,6 @@ module.exports = function(utils) {
 	var bcrypt = utils.bcrypt;
 	var constants = utils.constants;
 
-	var dbUsers = db.get("users");
-	var dbChars = db.get("characters");
-	var dbItems = db.get("items");
-
 	var userHelper = utils.userHelper;
 
 	var userExport = {
@@ -62,7 +58,7 @@ module.exports = function(utils) {
 				}
 				else {
 					req.session.user_id = this.lastID;
-					res.redirect("new_character");
+					res.redirect("new_entity");
 				}
 			});
 		},

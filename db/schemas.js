@@ -30,7 +30,7 @@ module.exports = function(utils) {
 
 	schemas.models = {
 
-		// login credentials. one user can have many characters.
+		// login credentials
 		users: {
 			fields: {
 				"user_id" : { "type": dt.INTEGER, "constraints": [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
@@ -38,7 +38,7 @@ module.exports = function(utils) {
 				"password_hash" : { "type": dt.TEXT, "constraints": cst.NOT_NULL }
 			},
 			foreignKeys: {
-				"primary_character_id" : { "type": dt.INTEGER, "table": "characters", "on": "character_id" }
+				"primary_character_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id" }
 			},
 			timestamps: true,
 			triggers: { INSERT: { AFTER: [
@@ -71,84 +71,101 @@ module.exports = function(utils) {
 			}
 		},
 
-		characters: {
+		// for the most part, something that can do things ...
+		// can be npc, character, creature, pet, etc.
+		entities: {
 			fields: {
-				"character_id": { "type": dt.INTEGER, "constraints": [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
-				"character_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
+				"entity_id": { "type": dt.INTEGER, "constraints": [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
+				"entity_name" : { "type": dt.TEXT },
+				"species_alias" : { "type" : dt.TEXT, "table" : "species", "on" : "species_id", "constraints" : cst.NOT_NULL }
 			},
 			foreignKeys: {
+				"species_id" : { "type" : dt.INTEGER, "table" : "species", "on" : "species_id", "constraints" : cst.NOT_NULL },
+				"current_thread_id" : { "type" : dt.INTEGER, "table" : "threads", "on" : "thread_id" },
+				"current_battle_id" : { "type" : dt.INTEGER, "table" : "battles", "on" : "battle_id" },
+
 				"user_id" : { "type": dt.INTEGER, "table": "users", "on": "user_id" },
 				"wip_outfit_id" : { "type": dt.INTEGER, "table": "outfits", "on": "outfit_id" },
-				"current_outfit_id" : { "type" : dt.INTEGER, "table" : "outfits", "on" : "outfit_id" },
-				"current_thread_id" : { "type" : dt.INTEGER, "table" : "threads", "on" : "thread_id" },
-				"current_battle_id" : { "type" : dt.INTEGER, "table" : "battles", "on" : "battle_id" }
+				"current_outfit_id" : { "type" : dt.INTEGER, "table" : "outfits", "on" : "outfit_id" }
 			},
 			timestamps : true,
 			triggers: { INSERT: { AFTER: [
-				'UPDATE users SET primary_character_id = new.character_id WHERE user_id = new.user_id AND primary_character_id = NULL',
-				'INSERT INTO outfits (user_id, character_id, outfit_name) VALUES (new.user_id, new.character_id, "wip")',
-				'INSERT INTO battle_stats (character_id) VALUES (new.character_id)',
-				'UPDATE characters SET wip_outfit_id = last_insert_rowid()'
+				'UPDATE users SET primary_character_id = new.entity_id WHERE user_id = new.user_id AND primary_character_id = NULL',
+				'INSERT INTO battle_stats (entity_id) VALUES (new.entity_id)'
 			]}}
 		},
 
 		battles: {
 			fields : {
 				"battle_id" : { "type" : dt.INTEGER, "constraints" : [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
-				"turn" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"turns" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
 				// 1 if player won, 0 if player lost
 				"outcome" : { "type" : dt.INTEGER }
 			},
 			foreignKeys : {
 				"thread_id" : { "type" : dt.INTEGER, "table" : "threads", "on" : "thread_id", "constraints" : cst.NOT_NULL },
+				"first_post_id" : { "type" : dt.INTEGER, "table" : "posts", "on" : "post_id", "constraints" : cst.NOT_NULL },
 				"last_post_id" : { "type" : dt.INTEGER, "table" : "posts", "on" : "post_id", "constraints" : cst.NOT_NULL }
 			}
 		},
 
-		// creature "type" - eg. owl, cat, ...
-		creature_blueprints: {
-			fields: {
-				"creature_blueprint_id" : { "type" : dt.INTEGER, "constraints" : [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
-				"creature_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
-				"creature_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL }
+		battle_steps: {
+			fields : {
+				"turn" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
+				"step_order" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
+				
+				// one of: "CHALLENGE", "SKILL", "ITEM", "ESCAPE"
+				"action" : { "type" : dt.TEXT, "constraints" : cst.NOT_NULL },
+				
+				// one of: "HIT", "MISS", "ESCAPED", "TRAPPED"
+				// if we allow AOE skills, we may have to create another table
+				// for ally skills - eg. healing - this can/should be null
+				"outcome" : { "type" : dt.TEXT },
+				
+				"delta_hp" : { "type" : dt.INTEGER },
+				"delta_mana" : { "type" : dt.INTEGER },
+				"delta_status_effects" : { "type" : dt.TEXT },
+
+				"target_delta_hp" : { "type" : dt.INTEGER },
+				"target_delta_mana" : { "type" : dt.INTEGER },
+				"target_delta_status_effects" : { "type" : dt.TEXT },
+			},
+			foreignKeys : {
+				"post_id" : { "type" : dt.INTEGER, "table" : "posts", "on" : "post_id", "constraints" : cst.NOT_NULL },
+				"actor_id" : { "type" : dt.INTEGER, "table" : "entities", "on" : "entity_id", "constraints" : cst.NOT_NULL },
+				"target_id" : { "type" : dt.INTEGER, "table" : "entities", "on" : "entity_id" }
 			}
 		},
 
-		creatures: {
-			fields: { 
-				"creature_id" : { "type" : dt.INTEGER, "constraints" : [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
-				"creature_alias" : { "type" : dt.TEXT }
-			},
-			foreignKeys: {
-				"creature_blueprint" : { "type": dt.INTEGER, "table": "creature_blueprints", "on": "blueprint_id" },
-				"current_thread_id" : { "type": dt.INTEGER, "table": "threads", "on": "thread_id" },
-				"current_battle_id" : { "type": dt.INTEGER, "table": "battles", "on": "battle_id" }
-			},
-			timestamps: true,
-			triggers: { INSERT: { AFTER: [
-				"UPDATE creatures SET creature_alias = (SELECT creature_alias FROM creature_blueprints WHERE creature_blueprint_id = new.creature_blueprint_id) WHERE creature_id = new.creature_id"
-			]}}
+		species: {
+			fields: {
+				"species_id" : { "type" : dt.INTEGER, "constraints" : [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
+				"species_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
+				"species_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL }
+			}
 		},
 
+		// some kind of event that can happen in a subforum with some probability.
 		encounters: {
 			fields: {
 				"chance" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL }
 			},
 			foreignKeys: {
 				"subforum_name" : { "type" : dt.INTEGER, "table" : "subforums", "on" : "subforum_name", "constraints" : cst.NOT_NULL },
-				"creature_id" : { "type" : dt.INTEGER, "table" : "creatures", "on" : "creature_id" },
+				"species_id" : { "type" : dt.INTEGER, "table" : "species", "on" : "species_id" },
 				"item_blueprint_id" : { "type" : dt.INTEGER, "table" : "item_blueprints", "on" : "item_blueprint_id" }
 			}
 		},
 
+		// weapons, shields, etc. basically battle stats for relevant items
 		battlegear_blueprints: {
 			fields: {
 				// required stats to equip
-				"str_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
-				"vit_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
-				"dex_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
-				"agi_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
-				"mag_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
+				"str_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"vit_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"dex_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"agi_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"mag_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
 				// base stat bonuses of this weapon
 				"str_base" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
 				"vit_base" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
@@ -167,29 +184,31 @@ module.exports = function(utils) {
 			}
 		},
 
-		// junction table btw weapons x characters or creatures, and skills
+		// who/what can carry this skill?
 		carriers_skills: {
-			fields: {
-				// what level is the skill? does not apply to weapons.
-				"level" : { "type" : dt.INTEGER }
-			},
 			foreignKeys: {
-				// for characters, the skill must be present in battlegear to be used,
-				// but the character must also have the parent skills.
-				// the level is dependent on the character/creature.
+				// if battlegear_blueprint_id != null, this skill is available when battlegear is equipped
+				// if species_id != null, this skill is native to entities of that species
 				"battlegear_blueprint_id" : { "type" : dt.INTEGER, "table" : "battlegear_blueprints", "on" : "battlegear_blueprint_id" },
-				"character_id" : { "type" : dt.INTEGER, "table" : "characters", "on" : "character_id" },
-				// whereas creatures are their own battlegear so they have their own skills
-				"creature_blueprint_id" : { "type" : dt.INTEGER, "table" : "creature_blueprints", "on" : "creature_blueprint_id" },
-				
+				"species_id" : { "type" : dt.INTEGER, "table" : "species", "on" : "species_id" },
 				"skill_id" : { "type" : dt.INTEGER, "table" : "skills", "on" : "skill_id", "constraints" : cst.NOT_NULL }
-			},
-			checks: [
-				"level != NULL OR battlegear_blueprint_id != NULL"
-			]
+			}
 		},
 
-		// skills are further defined in code.
+		// entities can learn skills, but to actually use them, 
+		// they must have a weapon equipped which also has the skill,
+		// unless the skill is native to the species.
+		entities_skills: {
+			fields: {
+				// what level is the skill? does not apply to weapons.
+				"level" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 }
+			},
+			foreignKeys: {
+				"entity_id" : { "type" : dt.INTEGER, "table" : "entities", "on" : "entity_id" },
+				"skill_id" : { "type" : dt.INTEGER, "table" : "skills", "on" : "skill_id", "constraints" : cst.NOT_NULL }
+			}
+		},
+
 		skills: {
 			fields: {
 				"skill_id" : { "type" : dt.INTEGER, "constraints" : [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
@@ -206,6 +225,7 @@ module.exports = function(utils) {
 			}
 		},
 
+		// for the most part, all entities have battle stats.
 		battle_stats: {
 			fields: {
 				"max_hp" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : schemas.defaults.battle_stats.hp },
@@ -217,11 +237,10 @@ module.exports = function(utils) {
 				"mag" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 }
 			},
 			foreignKeys: {
-				"character_id" : { "type": dt.INTEGER, "table": "characters", "on": "character_id", "constraints" : cst.UNIQUE },
-				"creature_id" : { "type": dt.INTEGER, "table": "creatures", "on": "creature_id", "constraints" : cst.UNIQUE }
+				"entity_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints" : [cst.UNIQUE, cst.NOT_NULL] },
 			},
 			triggers: { INSERT: { AFTER: [
-				"INSERT INTO battle_statuses (hp, mana, character_id, creature_id) VALUES (new.max_hp, new.max_mana, new.character_id, new.creature_id)"
+				"INSERT INTO battle_statuses (hp, mana, entity_id) VALUES (new.max_hp, new.max_mana, new.entity_id)"
 			]}}
 		},
 
@@ -242,6 +261,7 @@ module.exports = function(utils) {
 			}
 		},
 
+		// how are you doing in battle?
 		battle_statuses: {
 			fields: {
 				"hp" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
@@ -254,11 +274,11 @@ module.exports = function(utils) {
 				"exp_mag" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 }
 			},
 			foreignKeys: {
-				"character_id" : { "type": dt.INTEGER, "table": "characters", "on": "character_id", "constraints" : cst.UNIQUE },
-				"creature_id" : { "type": dt.INTEGER, "table": "creatures", "on": "creature_id", "constraints" : cst.UNIQUE }
+				"entity_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints" : [cst.UNIQUE, cst.NOT_NULL] }
 			}
 		},
 
+		// set of items that can be equipped at once
 		outfits: {
 			fields: {
 				"outfit_id" : { "type": dt.INTEGER, "constraints": [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
@@ -267,7 +287,7 @@ module.exports = function(utils) {
 			},
 			foreignKeys: {
 				"user_id" : { "type": dt.INTEGER, "table": "users", "on": "user_id", "constraints": cst.NOT_NULL },
-				"character_id" : { "type": dt.INTEGER, "table": "characters", "on": "character_id" }
+				"entity_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id" }
 			}
 		},
 
@@ -299,8 +319,8 @@ module.exports = function(utils) {
 			foreignKeys: {
 				"item_blueprint_id" : { "type": dt.INTEGER, "table": "item_blueprints", "on": "item_blueprint_id", "constraints": cst.NOT_NULL },
 				"user_id" : { "type": dt.INTEGER, "table": "users", "on": "user_id" },
-				//
-				"character_id" : { "type": dt.INTEGER, "table": "characters", "on": "character_id" }
+				//equipped by
+				"entity_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id" }
 			},
 			timestamps: true,
 			triggers: { INSERT: { AFTER: [
@@ -347,8 +367,8 @@ module.exports = function(utils) {
 			},
 			foreignKeys: {
 				"subforum_name" : { "type": dt.INTEGER, "table": "subforums", "on": "subforum_name", "constraints": cst.NOT_NULL },
-				"creator_id" : { "type": dt.INTEGER, "table": "characters", "on": "character_id", "constraints": cst.NOT_NULL },
-				"last_poster_id" : { "type": dt.INTEGER, "table": "characters", "on": "character_id" }
+				"creator_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints": cst.NOT_NULL },
+				"last_poster_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id" }
 			},
 			timestamps: true
 		},
@@ -362,7 +382,7 @@ module.exports = function(utils) {
 			},
 			foreignKeys: {
 				"thread_id" : { "type": dt.INTEGER, "table": "threads", "on": "thread_id", "constraints": cst.NOT_NULL },
-				"poster_id" : { "type": dt.INTEGER, "table": "characters", "on": "character_id", "constraints": cst.NOT_NULL }
+				"poster_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints": cst.NOT_NULL }
 			},
 			timestamps: true,
 			triggers: {
@@ -376,7 +396,11 @@ module.exports = function(utils) {
 	schemas.fields = {};
 	for (var k in schemas.models) {
 		var model = schemas.models[k];
-		schemas.fields[k] = Object.keys(model.fields);
+		if (model.fields) {
+			schemas.fields[k] = Object.keys(model.fields);
+		} else {
+			schemas.fields[k] = [];
+		}
 		if (model.foreignKeys) schemas.fields[k] = schemas.fields[k].concat(Object.keys(model.foreignKeys));
 		if (model.timestamps) {
 			schemas.fields[k].push("created_at");

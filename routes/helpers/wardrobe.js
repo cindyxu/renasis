@@ -1,6 +1,6 @@
 module.exports = function(utils) {
 
-	var db = utils.sqlitedb;
+	var db = utils.db;
 	var gm = utils.gm;
 	var im = gm.subClass({ imageMagick : true });
 	var mout = utils.mout;

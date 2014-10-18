@@ -1,21 +1,8 @@
 extends layout
 
-mixin post(postObj, lr)
+mixin post(post, lr)
 	.post-container(class=lr)
-		- if (lr === "left")
-			.avatar
-				img(src="/images/testout.png")
-		.post-links
-			a(href="fake")
-				img(src='images/bunny.png')
-			a(href="fake")
-				img(src='images/bunny.png')
-			a(href="fake")
-		div.post
-			p.post-message= postObj.message_bb
-		- if (lr === "right")
-			.avatar
-				img(src="/images/testout.png")
+		include ./includes/post.jade
 
 block append links
 	script(src="/javascripts/xbbcode.js")
@@ -39,5 +26,5 @@ block inner-content
 			mixin post(thread.posts[i], lr)
 
 block append content
-	- var context = "append-thread";
-	include ./includes/new_post_form.jade
+	.post-container.left.append-thread#new-post
+		include ./includes/new_post_form.jade

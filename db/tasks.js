@@ -2,7 +2,7 @@ module.exports = function(utils) {
 	var taskExports = {};
 
 	var schemas = utils.schemas;
-	var db = utils.sqlitedb;
+	var db = utils.db;
 	var _ = utils._;
 	var _str = _.str;
 
@@ -11,6 +11,8 @@ module.exports = function(utils) {
 	for (var i = 0; i < equipGroups.length; i++) {
 		defaultPose += equipGroups[i] + ":0" + (i < equipGroups.length - 1 ? ";" : "");
 	}
+
+	var skillIds = {};
 
 	var callbackIter = function(seqCmds, i, callback) {
 		return function(err) {
@@ -166,22 +168,17 @@ module.exports = function(utils) {
 
 		var forumCatalogue = utils.forumCatalogue;
 
-		var addEncounters = function(subforum, callback) {
-			var valuesStr = '';
-			for (var ei in subforum.encounters) {
-				var encounter = subforum.encounters[ei];
-				valuesStr += '(' + encounter.chance + 
-					', "' + subforum.subforum_name + '", ' + 
-					(encounter.creature_id || 'NULL') + ', ' +
-					(encounter.item_blueprint_id || 'NULL') +
-					(ei < subforum.encounters.length - 1 ? '), ' : ')');
-			}
-			db.run('INSERT INTO encounters (chance, subforum_name, creature_id, item_blueprint_id) VALUES ' +
-				valuesStr, function(err) {
+		var addEncounter = function(subforum, ei, callback) {
+			var encounter = subforum.encounters[ei];
+			if (!encounter) { return callback(); }
+			db.get('SELECT species_id FROM species WHERE species_name = ?', encounter.species_name, function(err, speciesObj) {
+				if (err) { console.log(err); return; }
+				var speciesId = speciesObj.species_id;
+				db.run('INSERT INTO encounters (subforum_name, species_id, chance) VALUES (?, ?, ?)', [subforum.subforum_name, speciesId, encounter.chance], function(err) {
 					if (err) { console.log(err); return; }
-					callback();
-				}
-			);
+					addEncounter(subforum, ei+1, callback);
+				});
+			});
 		};
 
 		var addSubforumChain = function(forum, si, callback) {
@@ -190,7 +187,7 @@ module.exports = function(utils) {
 			db.run('INSERT INTO subforums (subforum_name, subforum_alias, forum_name, forum_alias) VALUES (?, ?, ?, ?)',
 				[subforum.subforum_name, subforum.subforum_alias, forum.forum_name, forum.forum_alias], function(err) {
 					if (err) { console.log(err); return; }
-					addEncounters(subforum, function(err) {
+					addEncounter(subforum, 0, function(err) {
 						addSubforumChain(forum, si+1, callback);
 					});
 				}
@@ -238,24 +235,66 @@ module.exports = function(utils) {
 		addSkill(0);
 	};
 
-	taskExports.populateCreatureBlueprints = function(callback) {
-		var creatures = utils.creatureCatalogue;
-		var query = 'INSERT INTO creature_blueprints (creature_name, creature_alias) VALUES ';
-		for (var i = 0; i < creatures.length; i++) {
-			query += '("' + creatures[i].creature_name + '", "' + creatures[i].creature_alias +
-				(i < creatures.length - 1 ? '") ' : '")');
-		}
-		db.run(query, function(err) {
-			if (err) { console.log(err); return; }
-			callback();
-		});
+	taskExports.populateSpecies = function(callback) {
+		var speciesCatalogue = utils.speciesCatalogue;
+
+		var addSpecies = function(i, callback) {
+			var species = speciesCatalogue[i];
+			if (!species) { return callback(); }
+			db.run("INSERT INTO species (species_name, species_alias) VALUES (?, ?)",
+				[species.species_name, species.species_alias], function(err) {
+					var speciesId = this.lastID;
+					if (species.skills) {
+						insertCarrierSkills(speciesId, species.skills, 0, false, function(err) {
+							addSpecies(i+1, callback);
+						});
+					}
+				}
+			);
+		};
+
+		var insertCarrierSkills = function(speciesId, skillNames, i, f, callback) {
+			var skillsCached = true;
+			var query;
+			if (!f) {
+				for (var si in skillNames) {
+					if (!skillIds[skillNames[si]]) {
+						skillsCached = false;
+						break;
+					}
+				}
+			}
+
+			if (!skillsCached) {
+				query = 'SELECT skill_id, skill_name FROM skills WHERE skill_name in ("' + _str.join('", "', skillNames) + '")';
+				db.all(query, function(err, skillObjs) {
+					if (err) { console.log("error getting skill", err); return; }
+					for (var soi in skillObjs) {
+						var skillObj = skillObjs[soi];
+						skillIds[skillObj.skill_name] = skillObj.skill_id;
+					}
+					insertCarrierSkills(speciesId, skillNames, i, true, callback);
+				});
+				return;
+			}
+
+			query = "INSERT INTO carriers_skills (species_id, skill_id) VALUES " + 
+				_str.join(', ', _.map(skillNames, function(sn) {
+					return '(' + speciesId + ', ' + skillIds[sn] + ')';
+			}));
+			db.run(query, function(err) {
+					if (err) { console.log("error adding carrier skill", err); return; }
+					callback();
+				}
+			);
+		};
+
+		addSpecies(0, callback);
 	};
 
 	taskExports.populateItemBlueprints = function(callback) {
 		var itemCatalogue = utils.itemCatalogue;
 		
-		var skillIds = {};
-
 		var addItemBlueprint = function(category, subcategory, item, callback) {
 			var isEquippable = schemas.definitions.item_blueprints.isEquippable(category);
 			var query = 'INSERT INTO item_blueprints (item_alias, item_name, category, subcategory) VALUES ("' +

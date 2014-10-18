@@ -3,7 +3,7 @@ module.exports = function(utils) {
 	var constants = utils.constants;
 	var bcrypt = utils.bcrypt;
 	var crypto = utils.crypto;
-	var db = utils.sqlitedb;
+	var db = utils.db;
 	var _ = utils._;
 	var schemas = utils.schemas;
 	var schemaFields = schemas.fields;
@@ -19,16 +19,6 @@ module.exports = function(utils) {
 		db.get("SELECT * FROM users WHERE user_id = ?", userId, callback);
 	};
 
-	userHelper.getPrimaryOrFirstCharacter = function(userObj, callback) {
-		if (userObj.primary_character_id) {
-			db.get("SELECT * FROM characters WHERE character_id = ?",
-				userObj.primary_character_id, callback);
-		} else {
-			db.get("SELECT * FROM characters WHERE user_id = ?",
-				userObj.user_id, callback);
-		}
-	};
-
 	userHelper.REQUIRES_PREFERENCES = 1;
 	userHelper.REQUIRES_CHARACTER = 1 << 1;
 	userHelper.CHECK_ONLY = 1 << 2;
@@ -39,7 +29,7 @@ module.exports = function(utils) {
 			flags = 0;
 		}
 
-		var requiresCharacter = (flags & userHelper.REQUIRES_CHARACTER);
+		var requiresEntity = (flags & userHelper.REQUIRES_CHARACTER);
 		var requiresPreferences = (flags & userHelper.REQUIRES_PREFERENCES);
 		
 		if (req.session && req.session.user_id) {
@@ -48,8 +38,8 @@ module.exports = function(utils) {
 			var opts = " WHERE users.user_id = ?";
 			var optArr = [req.session.user_id];
 
-			if (requiresCharacter) {
-				query += " INNER JOIN characters ON characters.user_id = users.user_id";
+			if (requiresEntity) {
+				query += " LEFT JOIN entities ON entities.user_id = users.user_id";
 			}
 			if (requiresPreferences) {
 				query += " INNER JOIN preferences ON preferences.user_id = users.user_id";
@@ -62,10 +52,10 @@ module.exports = function(utils) {
 				else {
 					// 2 lazy 2 take out user fields
 					var userObj = rows[0];
-					if (requiresCharacter) {
-						userObj.characters = rows;						
+					if (requiresEntity) {
+						userObj.entities = rows;						
 						if (userObj.primary_character_id) {
-							userObj.primary_character = _.findWhere(userObj.characters, { "character_id" : userObj.primary_character_id });
+							userObj.primary_character = _.findWhere(userObj.entities, { "entity_id" : userObj.primary_character_id });
 						}
 					}
 					if (requiresPreferences) {
@@ -97,7 +87,7 @@ module.exports = function(utils) {
 			errors.push("Username cannot be blank");
 		}
 		else if (!(/^[0-9a-zA-Z_.-]+$/.test(username))) {
-			errors.push("Username must only consist of alphanumerical characters, _, and -");
+			errors.push("Username must only consist of alphanumerical entities, _, and -");
 		}
 		if (confirmPassword !== password) {
 			errors.push("Password and confirmation did not match");
@@ -121,17 +111,50 @@ module.exports = function(utils) {
 	};
 
 	userHelper.createCharacterForUser = function(charName, userObj, callback) {
-		//create character
-		db.run("INSERT INTO characters (character_name, user_id) VALUES (?, ?)", 
-		[charName, userObj.user_id], function(err) {
-			if (err) { console.log(err); callback(err); return; }
-			else if (!userObj.primary_character_id) {
-				db.run("UPDATE users SET primary_character_id = ? WHERE user_id = ?",
-					[this.lastID, userObj.user_id], callback);
-			}
-			else {
-				callback();
-			}	
+		//create entity
+		db.all('SELECT * FROM species ' +
+			'LEFT JOIN carriers_skills ON carriers_skills.species_id = species.species_id ' +
+			'WHERE species_name = ?', "human", function(err, rows) {
+				var speciesObj = rows[0];
+				db.run('BEGIN TRANSACTION', function(err) {
+					db.run('INSERT INTO entities (entity_name, user_id, species_id, species_alias) VALUES (?, ?, ?, ?)', 
+					[charName, userObj.user_id, speciesObj.species_id, speciesObj.species_alias], function(err) {
+						if (err) { console.log(err); callback(err); return; }
+						else if (!userObj.primary_character_id) {
+							var characterId = this.lastID;
+							db.run("UPDATE users SET primary_character_id = ? WHERE user_id = ?",
+								[characterId, userObj.user_id], function(err) {
+									db.run('INSERT INTO outfits (user_id, entity_id, outfit_name) VALUES (?, ?, "wip")',
+										[userObj.user_id, characterId], function(err) {
+											var outfitId = this.lastID;
+											db.run('UPDATE entities SET wip_outfit_id = ? WHERE entity_id = ?', 
+												[outfitId, characterId], function(err) {
+													var skillsQuery = 'INSERT INTO entities_skills (entity_id, skill_id) VALUES ';
+													var skillsArgs = [];
+													for (var i = 0; i < rows.length; i++) {
+														if (rows[i].skill_id) {
+															skillsQuery += '(?, ?) ';
+															skillsArgs.push(characterId, rows[i].skill_id);
+														}
+													}
+													db.run(skillsQuery, skillsArgs, function(err) {
+														db.run("COMMIT", function(err) {
+															callback();
+														});	
+													});
+												}
+											);
+										}
+									);
+								}
+							);
+						}
+						else {
+							callback();
+						}	
+					});
+				}
+			);
 		});
 	};
 

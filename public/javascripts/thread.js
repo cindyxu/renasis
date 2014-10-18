@@ -20,5 +20,23 @@ $(function() {
 		
 		return false;
 	});
+
+	$("#post-form").submit(function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		var values = $('#post-form').serialize();
+		console.log(window.location.href);
+		$.ajax({
+			url: window.location.href,
+			type: "POST",
+			data: values,
+			success: function(res) {
+				$("#thread").append(res);
+			},
+			error: function(err) {
+
+			}
+		});
+	});
 	
 });

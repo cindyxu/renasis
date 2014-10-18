@@ -60,7 +60,7 @@ module.exports = function(utils) {
 	};
 
 	// TAKES IN: item_id, (char_id)
-	// RETURNS: avatar_img_path, character, removed
+	// RETURNS: avatar_img_path, entity, removed
 	wardrobeExport.toggleEquipItem = function(req, res) {
 		userHelper.authenticate(req, res, userHelper.REQUIRES_CHARACTER, function(userObj) {
 			if (!userObj) return;
@@ -90,34 +90,7 @@ module.exports = function(utils) {
 	};
 
 	wardrobeExport.copyOutfit = function(req, res) {
-		/*
-		userHelper.authenticate(req, res, { requires_character: true }, function(userObj) {
-			if (!userObj) return;
-			if (!userObj.curr_character._id) {
-				res.redirect("new_character");
-			}
-			dbChars.findOne({ "_id" : userObj.curr_character._id }, function(err, charObj) {
-				var srcOutfit = charObj.outfits[req.body.src_outfit_name];
-				if (!srcOutfit) {
-					res.send({});
-				}
-				uniqSrcOutfit = _.uniq(srcOutfit, false, function(i) { return i.item_id; });
-				if (srcOutfit.length != uniqSrcOutfit.length) {
-					// refresh on client side
-				}
-				var setObj = {};
-				setObj["outfits." + req.body.dst_outfit_name] = uniqSrcOutfit;
-				dbChars.findAndModify({}, { "$set" : setObj }, { "new" : true }, function(err, charObjNew) {
-					if (err) {
-						console.log(err);
-					}
-					else {
-						res.send({ "character" : charObjNew });
-					}
-				});
-			});
-		});
-		*/
+		
 	};
 
 	wardrobeExport.getWardrobeSubcategoryItems = function(req, res) {

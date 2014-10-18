@@ -12,10 +12,9 @@ var path = require('path');
 
 var mongo = require('mongodb');
 var monk = require('monk');
-var db = monk('localhost:27017/renasistest');
 
 var sqlite3 = require('sqlite3').verbose();
-var sqlitedb = new sqlite3.Database("sqldata/renasistest");
+var db = new sqlite3.Database("sqldata/renasistest");
 
 var bcrypt = require('bcrypt');
 
@@ -43,7 +42,6 @@ _.mixin({
 
 var utils = { 
 	"db" : db, 
-	"sqlitedb" : sqlitedb,
 	"mout" : mout, 
 	"gm" : gm, 
 	"fs" : fs, 
@@ -58,7 +56,7 @@ utils.constants = require('./routes/helpers/constants');
 utils.schemas = require('./db/schemas.js')(utils);
 utils.itemCatalogue = require('./db/item_catalogue.js');
 utils.skillCatalogue = require('./db/skill_catalogue.js');
-utils.creatureCatalogue = require('./db/creature_catalogue.js');
+utils.speciesCatalogue = require('./db/species_catalogue.js');
 utils.forumCatalogue = require('./db/forum_catalogue.js');
 
 var dbTasks = require('./db/tasks')(utils);
@@ -70,24 +68,30 @@ utils.userHelper = require('./routes/helpers/user')(utils);
 utils.creationHelper = require('./routes/helpers/creation')(utils);
 utils.wardrobeHelper = require('./routes/helpers/wardrobe')(utils);
 utils.forumHelper = require('./routes/helpers/forum')(utils);
-
+utils.encountersHelper = require('./routes/helpers/encounters')(utils);
 var wardrobe = require('./routes/wardrobe')(utils);
 var user = require('./routes/user')(utils);
 var forum = require('./routes/forum')(utils);
 
-sqlitedb.serialize(function() {
+db.serialize(function() {
+
 	dbTasks.recreateTables(function() {
+		console.log("Tables recreated");
 		dbTasks.populateSkills(function() {
-			dbTasks.populateCreatureBlueprints(function() {
+			console.log("Skills added");
+			dbTasks.populateSpecies(function() {
+				console.log("Species added");
 				dbTasks.populateItemBlueprints(function() {
+					console.log("Items added");
 					delete utils.itemCatalogue;
 					delete utils.skillsCatalogue;
-					delete utils.creatureCatalogue;
-					console.log("DONE");
+					delete utils.speciesCatalogue;
 					dbTasks.populateForums(function() {
+						console.log("Forums added");
 						dbTasks.createItemInstances(1, function() {
-
+							console.log("Item instances created");
 							dbTasks.createGod(utils.userHelper);
+							console.log("God created");
 						});
 					});
 				});	
@@ -122,10 +126,6 @@ if ('development' == app.get('env')) {
 
 app.get('/', routes.index);
 
-app.get('/smforum', public.smforum);
-app.get('/smthread', public.smthread);
-app.get('/smforumthreads', public.smforumthreads);
-
 app.get('/login', public.login);
 app.get('/signup', public.signup);
 app.post('/login', user.login);
@@ -144,8 +144,6 @@ app.get('/dressroom/get_wardrobe_subcategory_items/:subcategory', wardrobe.getWa
 app.post('/dressroom/toggle_equip_item', wardrobe.toggleEquipItem);
 app.post('/dressroom/shift_equipped_item', wardrobe.shiftEquippedItem);
 app.post('/dressroom/copy_outfit', wardrobe.copyOutfit);
-app.get('/:what', routes.index);
-
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
   debug("initialized!");

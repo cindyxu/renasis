@@ -1,25 +1,21 @@
-- var dir = "";
-- if (postCount % 2 === 0) dir = "left";
-- if (postCount % 2 === 1) dir = "right";
-.post-container#new-post( class="#{dir} #{context}" )
-	- if (dir !== "left")
-		.avatar
-			img(src = "/images/testout.png")
-	.post
-		form#post-form( method="post" )
-			- if (context === "new-thread")
-				label Thread title
-				input#thread-alias(name="thread-alias")
-			#post-edit-section
-				#post-emotes
-					- var emotesList = ["happy", "sad", "tongue", "angry", "surprised", "cool", "oops", "blush", "glum", "sick"];
-					- for (var i = 0; i < emotesList.length; i++)
-						a( href=emotesList[i] )
-							img( src="/images/emotes/" + emotesList[i] + ".png" )
-				textarea#message-bb( name="message-bb" placeHolder="Write something!" )
-			#post-preview-section
-			button#preview-post-button Preview
-			button#submit-post-button Submit
-	- if (dir === "left")
-		.avatar
-			img(src = "/images/testout.png")
+- if (dir !== "left")
+	.avatar
+		img(src = "/images/testout.png")
+.post
+	form#post-form( method="post" )
+		- if (context === "new-thread")
+			label Thread title
+			input#thread-alias(name="thread-alias")
+		#post-edit-section
+			#post-emotes
+				- var emotesList = ["happy", "sad", "tongue", "angry", "surprised", "cool", "oops", "blush", "glum", "sick"];
+				- for (var i = 0; i < emotesList.length; i++)
+					a( href=emotesList[i] )
+						img( src="/images/emotes/" + emotesList[i] + ".png" )
+			textarea#message-bb( name="message-bb" placeHolder="Write something!" )
+		#post-preview-section
+		button#preview-post-button Preview
+		button#submit-post-button Submit
+- if (dir === "left")
+	.avatar
+		img(src = "/images/testout.png")

@@ -15,8 +15,8 @@ module.exports = [
 		}
 	},
 	{
-		"skill_name" : "paw",
-		"skill_alias" : "paw",
+		"skill_name" : "swing",
+		"skill_alias" : "swing",
 		"active" : 1,
 		"battle_stat_growths" : {
 			"str" : 0.5,

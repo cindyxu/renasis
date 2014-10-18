@@ -6,5 +6,6 @@ block append links
 	script(src="/javascripts/new_thread.js")
 
 block inner-content
-	- var context = "new-thread";
-	include ./includes/new_post_form.jade
+	.post-container.new-thread.left#new-post
+		- var context = "new-thread";
+		include ./includes/new_post_form.jade

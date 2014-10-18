@@ -19,7 +19,7 @@ module.exports = function(utils) {
 		};
 	};
 
-	creationHelper.blankCharacter = function() {
+	creationHelper.blankEntity = function() {
 		return { 
 			"outfits" : {
 				"wip" : creationHelper.blankOutfit(),

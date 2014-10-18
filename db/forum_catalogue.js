@@ -8,7 +8,7 @@ module.exports = {
 				"encounters" : [
 					{
 						"chance" : 1.0,
-						"creature_name" : "bear"
+						"species_name" : "bear"
 					}
 				]
 			}
