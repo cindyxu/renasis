@@ -1,7 +1,57 @@
 extends layout
 
 block append links
+	link(rel='stylesheet', href='/stylesheets/room.css')
+	script(src="/javascripts/room.js")
 
 block inner-content
-	h1= title
-	p Welcome to #{title}
+	#inner-content
+		#customize-room-container
+			canvas#customize-room( width=800, height=600 )
+			#furniture-container
+				p= "decorate!"
+			#furniture-metadata
+				.select-furniture(data-item-id=1,
+					data-item-alias="Bed",
+					data-item-name="bed",
+					data-item-subcategory="bed",
+					data-base-offset-x=-2, 
+					data-base-offset-y=25,
+					data-base-rows=2,
+					data-base-cols=2,
+					data-base-tiles-bits=15)
+
+					img.furniture-thumb(src="/images/items/thumbs/furniture/bed.png")
+					img.furniture-image(src="/images/items/furniture/bed/bed.png")
+
+				.select-furniture(data-item-id=2,
+					data-item-alias="Birch floor",
+					data-item-name="birch_floor",
+					data-item-subcategory="floor",
+					data-base-offset-x=-2, 
+					data-base-offset-y=0,
+					data-base-rows=2,
+					data-base-cols=2)
+
+					img.furniture-thumb(src="/images/items/thumbs/furniture/birch.png")
+					img.furniture-image(src="/images/items/furniture/floor/birch1.png")
+					img.furniture-image(src="/images/items/furniture/floor/birch2.png")
+					img.furniture-image(src="/images/items/furniture/floor/birch3.png")
+					img.furniture-image(src="/images/items/furniture/floor/birch4.png")
+
+				.select-furniture(data-item-id=3,
+					data-item-alias="Sky wall",
+					data-item-name="sky_wall",
+					data-item-subcategory="wall",
+					data-base-offset-x=0, 
+					data-base-offset-y=0,
+					data-base-cols=4)
+					img.furniture-thumb(src="/images/items/thumbs/furniture/skywall.png")
+					img.furniture-image(src="/images/items/furniture/wall/sky1.png")
+					img.furniture-image(src="/images/items/furniture/wall/sky2.png")
+					img.furniture-image(src="/images/items/furniture/wall/sky3.png")
+					img.furniture-image(src="/images/items/furniture/wall/sky4.png")
+					img.furniture-image(src="/images/items/furniture/wall/sky5.png")
+					img.furniture-image(src="/images/items/furniture/wall/sky6.png")
+					img.furniture-image(src="/images/items/furniture/wall/sky7.png")
+					img.furniture-image(src="/images/items/furniture/wall/sky8.png")

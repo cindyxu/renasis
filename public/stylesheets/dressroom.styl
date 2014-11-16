@@ -1,0 +1,132 @@
+@import "base"
+@import "layout"
+
+$wardrobe-tab-height = 1.5rem
+
+#dressroom
+	height: 100%
+	padding: 1rem 1rem
+	text-align: center
+	position: relative
+	border-radius: 10px
+	padding: 1rem
+	> *
+		vertical-align: top
+	#dressroom-inner
+		height: 100%
+		overflow: hidden
+		padding: 0 1rem
+
+	#dressroom-fluid
+		fluid-column()
+		padding-right: 1rem
+		height: 100%
+		text-align: right
+		
+	#wardrobe-col
+		padding-top: 1rem
+		padding-bottom: 1rem
+		fluid-column()
+		
+		padding-right: 1rem
+		height: 100%
+		> *
+			width: 100%
+	#wardrobe
+		height: 100%
+		position: relative
+	ul#subcategory-tabs
+		width: 100%
+		text-align: left
+		z-index: 1
+		display: inline-block
+		position: absolute
+		height: $wardrobe-tab-height
+		top: 0
+		left: 0
+		li
+			ui-header(true)
+			display: inline-block
+			padding-left: 0.8rem
+			padding-right: 0.8rem
+			padding-top: 0.3rem
+			border-radius: 10px 10px 0 0
+			border-right: 1px solid $ui-header-shadow
+			height: 100%
+	#wardrobe-inner
+		border-radius: 10px
+		height: 100%
+		padding-top: $wardrobe-tab-height
+	#subcategory-items
+		background-color: white
+		height: 100%
+		max-height: 15rem
+		box-shadow(0 5px 0 rgba(0, 0, 0, 0.1))
+		overflow-y: auto
+		border-radius: 0 10px 10px 10px
+		text-align: left
+		padding: 0.5rem
+		ul li
+			display: inline-block
+	#equipped-col
+		padding: 1rem
+		text-align: left
+		fixed-right-column(25%)
+		max-width: 300px
+		height: 100%
+	#equipped
+		height: 100%
+	#equipped-inner
+		height: 100%
+
+	#preview
+		padding-top: 1rem
+		padding-bottom: 1rem
+		fixed-right-column($preview-width)
+		> *
+			display: inline-block
+			width: 100%
+	#preview-actions
+		height: 1.5rem
+		background-color: $aqua
+		button
+			border-width: 0
+			background-color: transparent
+	#preview-inner
+		background-color: white
+		width: $preview-width
+		height: $preview-height
+		border-radius(10px)
+		overflow: hidden
+		box-shadow(0 5px 0 rgba(0, 0, 0, 0.1))
+
+.equipped-layer
+	margin-bottom: 1rem
+	.header
+		ui-header(false)
+		width: 100%
+		padding: 0.1rem
+		padding-left: 0.5rem
+		padding-top: 0.5rem
+		border-radius(0.5rem 0.5rem 0 0)
+	ul
+		ui-content()
+		min-height: 0.5rem
+		overflow-y: auto
+		border-radius(0 0 0.5rem 0.5rem)
+		padding-bottom: 0.5rem
+		box-shadow(0 5px 0 rgba(0, 0, 0, 0.1))
+.equipped-item
+	ui-list-item()
+	position: relative
+	padding-top: 0.4rem
+	span
+		padding-left: 0.5rem
+	.actions
+		position: absolute
+		right: 0
+		top: 0.5rem
+		button
+			background-color: transparent
+			border-width: 0
+			margin: 0

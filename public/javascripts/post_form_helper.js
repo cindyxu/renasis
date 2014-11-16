@@ -19,7 +19,7 @@ var attachPreviewPostButtonListener = function() {
 		bbRes.html = parseForEmotes(bbRes.html);
 		
 		$("#post-edit-section").css("display", "none");
-		$("#post-preview-section").html(bbRes.html);
+		$("#post-preview-section .bubble").html(bbRes.html);
 		$("#post-preview-section").css("display", "block");
 
 		$(this).attr("id", "edit-post-button").html("Edit");

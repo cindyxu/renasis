@@ -87,7 +87,7 @@ var inflateWardrobeItemThumbListing = function(listing) {
 	listing.addClass("wardrobe-item");
 	listing.addClass("hover-pointer");
 	var thumb = $("<img>");
-	thumb.attr("src", "/images/" + listing.attr("data-item-name") + "_thumb.png");
+	thumb.attr("src", "/images/items/thumbs/" + listing.attr("data-item-subcategory") + "/" + listing.attr("data-item-name") + ".png");
 	listing.append(thumb);
 	return listing;
 };

@@ -1,0 +1,273 @@
+@import "reset.css";
+h1 {
+  font-family: "Lora", serif;
+  font-size: 4rem;
+  color: #fff;
+  text-shadow: -1px 0 #9d6827, 0 2px #9d6827, 1px 0 #9d6827, 0 -1px #9d6827;
+}
+*,
+*:before,
+*:after,
+*:hover,
+*:active,
+*:visited {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  cursor: crosshair;
+}
+body {
+  font: 14px "Lucida Grande", sans-serif;
+  background-color: $tan;
+  background: url("/images/yellow.jpg");
+  color: #9d6827;
+  min-width: 40rem;
+  -webkit-font-smoothing: none;
+}
+body,
+html {
+  height: 100%;
+  text-align: center;
+}
+a,
+a:before,
+a:after,
+a:hover,
+a:active,
+a:visited {
+  outline: none;
+}
+.link-med {
+  font-size: 1.5rem;
+  font-family: 'Francois One', sans-serif;
+  text-shadow: 0 1px $cocoa;
+}
+.desc {
+  font-size: 0.8rem;
+}
+.field-group {
+  margin-bottom: 0.5rem;
+}
+a:link {
+  text-decoration: none;
+  color: #9d6827;
+}
+#content {
+  position: relative;
+  height: 100%;
+}
+.icon-reveal-container .icon-reveal-group {
+  position: relative;
+  display: inline-block;
+  top: 2px;
+}
+.icon-reveal-container .icon-reveal-group img {
+  opacity: 0.2;
+  margin-right: 5px;
+}
+.icon-reveal-container .icon-reveal-group img.icon-reveal-hover {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+}
+.icon-reveal-container .icon-reveal-group img.icon-reveal-glow {
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  opacity: 0.01;
+  z-index: 2;
+}
+.icon-reveal-container:hover .icon-reveal-group .icon-reveal-hover {
+  opacity: 1;
+}
+.icon-reveal-container:hover .icon-reveal-group .icon-reveal-glow {
+  opacity: 0.5;
+}
+input {
+  border-width: 0px;
+  border-bottom: 1px solid #fff;
+  background-color: transparent;
+  padding: 2px;
+}
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+#nav-bar {
+  height: 100%;
+  width: 7rem;
+  position: fixed;
+  left: 0;
+  text-align: left;
+  z-index: 999;
+}
+#nav-bar-menu {
+  background-color: #9d6827;
+  color: #fae788;
+  text-shadow: 0 2px 1px #4e3413;
+  -webkit-border-radius: 0 0 10px 0;
+  -moz-border-radius: 0 0 10px 0;
+  border-radius: 0 0 10px 0;
+  overflow: hidden;
+  -webkit-box-shadow: -5px 5px 0px rgba(100,0,0,0.2);
+  -moz-box-shadow: -5px 5px 0px rgba(100,0,0,0.2);
+  box-shadow: -5px 5px 0px rgba(100,0,0,0.2);
+}
+#nav-bar-menu a {
+  color: #fae788;
+  text-shadow: 0 2px 1px #4e3413;
+}
+#nav-bar-menu li.nav-item {
+  display: block;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  border-bottom: 1px solid #8d5d23;
+}
+#nav-bar-menu li.nav-item:first-child {
+  padding-top: 5px;
+}
+#nav-bar-menu li.nav-item:last-child {
+  border-bottom: 1px solid #4e3413;
+  padding-bottom: 5px;
+}
+#nav-bar-menu li.nav-item:hover {
+  left: 2px;
+  background-color: #a6773c;
+}
+#nav-bar-menu li.nav-item a {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+#nav-bar-menu li.nav-item a span {
+  background-repeat: no-repeat;
+}
+#nav-bar-menu li.nav-item a:hover {
+  color: #fff;
+}
+#nav-bar-status {
+  background-color: #9d6827;
+  color: #fae788;
+  text-shadow: 0 2px 1px #4e3413;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  -webkit-border-radius: 0 10px 0 0;
+  -moz-border-radius: 0 10px 0 0;
+  border-radius: 0 10px 0 0;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-right: 1px solid #8d5d23;
+  -webkit-box-shadow: -5px -5px 0px rgba(100,0,0,0.2);
+  -moz-box-shadow: -5px -5px 0px rgba(100,0,0,0.2);
+  box-shadow: -5px -5px 0px rgba(100,0,0,0.2);
+}
+#nav-bar-status a {
+  color: #fae788;
+  text-shadow: 0 2px 1px #4e3413;
+}
+#nav-bar-status #nav-bar-sprite,
+#nav-bar-status #nav-bar-battle-status,
+#nav-bar-status #nav-bar-settings {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.7rem;
+  border-bottom: 1px solid #8d5d23;
+}
+#nav-bar-status #nav-bar-sprite {
+  width: 100%;
+  text-align: center;
+}
+#nav-bar-status #nav-bar-battle-status .battle-status-bar-container {
+  position: relative;
+  text-align: right;
+}
+#nav-bar-status #nav-bar-battle-status .battle-status-bar-container .battle-status-bar {
+  height: 0.5rem;
+  background-color: #fff;
+  display: inline-block;
+  width: 4rem;
+  margin-left: 0.5rem;
+  text-align: left;
+}
+#nav-bar-status #nav-bar-battle-status .battle-status-bar-container .battle-status-bar .battle-status-bar-progress {
+  height: 100%;
+  width: 70%;
+}
+#nav-bar-status #nav-bar-battle-status .battle-status-bar-container .battle-status-bar#hp-bar .battle-status-bar-progress {
+  background-color: #f30;
+}
+#nav-bar-status #nav-bar-battle-status .battle-status-bar-container .battle-status-bar#mp-bar .battle-status-bar-progress {
+  background-color: #59d;
+}
+#nav-bar-status #nav-bar-settings {
+  border-bottom: 0;
+}
+#right-column {
+  height: 100%;
+  overflow-y: hidden;
+}
+#header-bar {
+  overflow: auto;
+  background-color: #cd9;
+  color: #000;
+  border-top: 1px solid #d6e3ad;
+  border-bottom: 1px solid #b7c689;
+  position: fixed;
+  right: 0;
+  top: 0;
+  display: inline-block;
+  width: inherit;
+  z-index: 998;
+}
+#inner-content {
+  overflow-y: auto;
+  width: 100%;
+  padding-left: 7rem;
+  min-height: 100%;
+}
+#inner-content {
+  text-align: center;
+}
+#furniture-metadata {
+  display: none;
+}
+#customize-room-container {
+  margin-top: 3rem;
+  position: relative;
+  display: inline-block;
+  width: 800px;
+  height: 600px;
+}
+#customize-room {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+#furniture-container {
+  background-color: #cd9;
+  color: #000;
+  border-top: 1px solid #d6e3ad;
+  border-bottom: 1px solid #b7c689;
+  -moz-box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  box-sizing: content-box;
+  position: absolute;
+  -webkit-border-radius: 1rem 1rem 0 0;
+  -moz-border-radius: 1rem 1rem 0 0;
+  border-radius: 1rem 1rem 0 0;
+  padding: 0.1rem;
+  text-align: left;
+  -webkit-box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+  -moz-box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+  box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+}
+#furniture-container p {
+  padding: 0.5rem;
+}

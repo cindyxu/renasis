@@ -1,0 +1,6 @@
+.forum-event.battle
+	- if (post.action === "CHALLENGE")
+		img( src="/images/bear2.png" )
+		- var actorLabel = post.actor_entity_name ? post.actor_entity_name : "A " + post.actor_species_alias;
+		p #{actorLabel} appeared!
+		button Make a move!

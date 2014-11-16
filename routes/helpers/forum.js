@@ -11,10 +11,10 @@ module.exports = function(utils) {
 
 	forumHelper.findSubforumWithThreads = function(subforumName, page, threadsPerPage, callback) {
 		debug("fetching subforum", subforumName);
-		db.all("SELECT * FROM subforums " +
-			"LEFT JOIN threads ON threads.subforum_name = subforums.subforum_name " +
-			"WHERE subforums.subforum_name = ? " +
-			"ORDER BY threads.updated_at DESC LIMIT ?, ?",
+		db.all('SELECT * FROM subforums ' +
+			'LEFT JOIN threads ON threads.subforum_name = subforums.subforum_name ' +
+			'WHERE subforums.subforum_name = ? ' +
+			'ORDER BY threads.updated_at DESC LIMIT ?, ?',
 			[subforumName, ((page-1) * threadsPerPage), threadsPerPage], 
 			function(err, rows) {
 				if (err) { console.log(err); callback(err); return; }
@@ -30,11 +30,51 @@ module.exports = function(utils) {
 		);
 	};
 
-	forumHelper.findThreadWithPosts = function(threadId, startPosts, numPosts, callback) {
-		// get all posts on this page
-		db.all("SELECT * FROM threads INNER JOIN posts " +
-			"WHERE threads.thread_id = ? ORDER BY posts.created_at LIMIT ?, ?",
-			[threadId, startPosts, numPosts], function(err, rows) {
+	forumHelper.findPost = function(postId, callback) {
+		db.get('SELECT *, posts.post_id FROM posts ' +
+			'LEFT JOIN battle_steps ON battle_steps.post_id = posts.post_id ' +
+			'WHERE post_id = ?', postId, callback);
+	};
+
+	forumHelper.findThreadWithPosts = function(threadId, startPost, numPosts, callback) {
+		// get all posts on this page + battle steps
+		// NOTE must reselect posts.post_id because if battle_steps is null,
+		// post_id gets overwritten as null
+		db.all('SELECT threads.*, posts.*, battle_steps.*, posts.post_id, ' + 
+			'actors.species_alias AS actor_species_alias, actors.entity_name AS actor_entity_name, ' +
+			'targets.species_alias AS target_species_alias, targets.entity_name AS target_entity_name ' +
+			'FROM threads ' +
+			'INNER JOIN posts ON posts.thread_id = threads.thread_id ' +
+			// battle steps. uggh is there any way to not do this here ...
+			'LEFT JOIN (battle_steps ' + 
+				'LEFT JOIN entities AS actors ON actors.entity_id = battle_steps.actor_id ' +
+				'LEFT JOIN entities AS targets ON targets.entity_id = battle_steps.target_id) ' +
+			'ON battle_steps.post_id = posts.post_id ' +
+			'WHERE threads.thread_id = ? ORDER BY posts.created_at LIMIT ?, ?',
+			[threadId, startPost, numPosts], function(err, rows) {
+				console.log(rows);
+				if (err) { console.log(err); callback(err); return; }
+				var thread = _.pick(rows[0], schemas.fields.threads);
+				thread.posts = rows;
+				callback(undefined, thread);
+			}
+		);
+	};
+
+	// todo: generalize WHEN NEED ARISES
+	forumHelper.findThreadWithPostsAfter = function(threadId, startId, callback) {
+		db.all('SELECT threads.*, posts.*, battle_steps.*, posts.post_id, ' + 
+			'actors.species_alias AS actor_species_alias, actors.entity_name AS actor_entity_name, ' +
+			'targets.species_alias AS target_species_alias, targets.entity_name AS target_entity_name ' +
+			'FROM threads ' +
+			'INNER JOIN posts ON posts.thread_id = threads.thread_id ' +
+			'LEFT JOIN (battle_steps ' + 
+				'LEFT JOIN entities AS actors ON actors.entity_id = battle_steps.actor_id ' +
+				'LEFT JOIN entities AS targets ON targets.entity_id = battle_steps.target_id) ' +
+			'ON battle_steps.post_id = posts.post_id ' +
+			'WHERE threads.thread_id = ? AND posts.post_id > ? ORDER BY posts.created_at',
+			[threadId, startId], function(err, rows) {
+				console.log(rows);
 				if (err) { console.log(err); callback(err); return; }
 				var thread = _.pick(rows[0], schemas.fields.threads);
 				thread.posts = rows;
@@ -53,11 +93,11 @@ module.exports = function(utils) {
 		db.run("INSERT INTO posts (message_bb, thread_id, poster_id, poster_name) VALUES (?, ?, ?, ?)",
 			[messageBB, threadId, posterId, posterName], function(err) {
 				var postId = this.lastID;
-				console.log(postId);
 				callback(undefined, {
 					"post_id" : postId
 				});
-			});
+			}
+		);
 	};
 
 	forumHelper.createThreadWithPost = function(threadAlias, messageBB, subforumName, creatorId, creatorName, callback) {

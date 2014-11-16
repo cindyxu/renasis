@@ -2,10 +2,12 @@ extends layout
 
 block append links
 	script(src="/javascripts/xbbcode.js")
+	script(src="/javascripts/jquery.serialize-object.min.js")
 	script(src="/javascripts/post_form_helper.js")
 	script(src="/javascripts/new_thread.js")
+	link(rel='stylesheet', href='/stylesheets/subforum.css')
 
 block inner-content
-	.post-container.new-thread.left#new-post
+	#inner-content
 		- var context = "new-thread";
 		include ./includes/new_post_form.jade

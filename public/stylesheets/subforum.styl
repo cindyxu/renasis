@@ -1,0 +1,50 @@
+@import "base"
+@import "layout"
+@import "post"
+
+#thread-list
+	li.thread-row
+		ui-list-item()
+		padding: 0 $std-margin-side
+		border-bottom: 1px solid $ui-text-color
+		&.stickied .title
+		&.unread .title
+			font-weight: bold
+		&.header
+			background-color: white
+			box-shadow: 0 5px 20px -5px $cocoa
+			zindex: 1
+			position: relative
+		> *
+			display: inline-block
+		.title
+			display: inline-block
+			height: 100%
+			width: 50%
+			.thread-link
+				padding-top: 0.8rem
+				display: block
+				font-size: 1rem
+			.pages
+				padding-bottom: 0.4rem
+				font-size: 0.7rem
+				display: block
+		.creator
+			width: 15%
+		.last-reply
+			width: 15%
+		.stats
+			width: 19%
+			font-size: 0.7rem
+
+#thread-bar
+	#thread-desc
+		float: left
+		font-size: 2rem
+		font-family: 'Francois One', sans-serif
+		text-shadow: 0 1px $cocoa
+	#thread-actions
+		float: right
+		a
+			padding: 0.5rem 0.5rem
+			display: inline-block

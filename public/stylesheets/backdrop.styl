@@ -1,0 +1,37 @@
+backdrop(imgWidth, imgHeight, n, imgPrefix)
+	#backdrop
+		position: relative
+		perspective: 1px
+		height: 100vh
+		overflow-x: hidden
+		overflow-y: auto
+		width: 100%
+		perspective-origin: 0% 0%
+
+	.backdrop-layer-begin, .backdrop-layer-extend
+		position: absolute
+		top: 0
+		left: 0
+		transform-origin: 0% 0%
+
+	.backdrop-layer-origin
+		width: imgWidth
+		for idx in (1..n)
+			&:nth-child(idx)
+				z-index: -idx-1
+				transform: scale(idx) translateZ((-idx+1)px)
+				background-image: url(imgPrefix + "-origin.png")
+
+	.backdrop-layer-extend
+		width: 100%
+		background-repeat: repeat-x
+		for idx in (1..n)
+			&:nth-child(idx)
+				z-index: -idx-1
+				transform: scale(idx) translateZ((-idx+1)px) translateX(imgWidth)
+				background-image: url(imgPrefix + "-extend.png")
+
+	#inner-content
+		margin-top: imgHeight
+		transform: translateZ(0)
+		position: relative

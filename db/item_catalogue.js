@@ -156,21 +156,7 @@ module.exports = {
 				},
 
 				"battlegear" : {
-					"str_base": 1,
-					"str_mult": 0,
-				
-					"vit_base": 0,
-					"vit_mult": 0,
-				
-					"dex_base": 0,
-					"dex_mult": 0,
-				
-					"agi_base": 0,
-					"agi_mult": 0,
-				
-					"mag_base": 0,
-					"mag_mult": 0,
-
+					"boost_str": 1,
 					"skills" : ["slash"]
 				}
 			}

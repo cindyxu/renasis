@@ -1,0 +1,177 @@
+@import "reset.css"
+
+/* colors */
+$ui-color = #9d6827
+$ui-subtle-highlight = tint($ui-color, 10%)
+$ui-subtle-shadow = shade($ui-color, 10%)
+$ui-shadow = shade($ui-color, 50%)
+$ui-text-color = #fae788
+
+$ui-header-color = #ccdd99
+$ui-header-text-color = black
+$ui-header-shadow = shade($ui-header-color, 10%)
+$ui-header-subtle-highlight = tint($ui-header-color, 20%)
+$ui-header-highlight = tint($ui-header-color, 50%)
+
+$ui-content-color = white
+$ui-content-text-color = #889999
+$ui-content-shadow-color = #eeeeee
+
+$avatar-width = 160px
+$avatar-height = 200px
+$preview-width = 170px
+$preview-height = 220px
+
+$nav-bar-width = 7rem
+$header-bar-height = 4rem
+
+ add(a, b)
+	if a is a 'unit' and b is a 'unit'
+		a + b
+	else
+		(error 'a and b must be units!')
+
+border-towns(c1, c2)
+	background-image: -webkit-gradient(linear, left bottom, right bottom, color-stop(0.2, c1), color-stop(0.5, c2), color-stop(0.8, c1))
+	background-image: -moz-linear-gradient(left center, c1 20%, c2 50%, c1 80% )
+	padding-bottom: 1px
+
+border-radius(args...)
+	-webkit-border-radius args
+	-moz-border-radius args
+	border-radius args
+
+box-shadow(args...)
+	-webkit-box-shadow args
+	-moz-box-shadow args
+	box-shadow args
+
+vertical-align(percent)
+	position: relative
+	top: percent
+	-webkit-transform: translateY(-percent)
+	-ms-transform: translateY(-percent)
+	transform: translateY(-percent)
+
+fluid-column()
+	overflow: hidden
+	width: auto
+
+fixed-right-column(columnWidth)
+	width: columnWidth
+	float: right
+
+box-sizing(sizing)
+	-moz-box-sizing: sizing
+	-webkit-box-sizing: sizing
+	box-sizing: sizing
+h1
+	font-family: "Lora", serif
+	font-size: 4rem
+	color: white
+	text-shadow: -1px 0 $ui-color, 0 2px $ui-color, 1px 0 $ui-color, 0 -1px $ui-color
+
+*, *:before, *:after, *:hover, *:active, *:visited
+	box-sizing(border-box)
+	cursor: crosshair
+
+body
+	font: 14px "Lucida Grande", sans-serif
+	background-color: $tan
+	background: url("/images/yellow.jpg")
+	color: $ui-color
+	min-width: 40rem
+	-webkit-font-smoothing: none
+
+body, html
+	height: 100%
+	text-align: center
+
+a, a:before, a:after, a:hover, a:active, a:visited
+	outline: none
+
+ui-master()
+	background-color: $ui-color
+	color: $ui-text-color
+	text-shadow: 0 2px 1px $ui-shadow
+	a
+		color: $ui-text-color
+		text-shadow: 0 2px 1px $ui-shadow
+
+ui-header(clickable)
+	background-color: $ui-header-color
+	color: $ui-header-text-color
+	border-top: 1px solid $ui-header-subtle-highlight
+	border-bottom: 1px solid $ui-header-shadow
+	if clickable
+		&:hover
+			background-color: $ui-header-subtle-highlight
+		&:active
+			background-color: $ui-header-highlight
+
+ui-content()
+	background-color: $ui-content-color
+	color: $ui-content-text-color
+
+ui-list-item()
+	ui-content()
+	border-bottom: 1px solid $ui-content-shadow-color
+	font-size: 0.8rem
+	&:last-child
+		border-bottom-width: 0
+	
+.link-med
+	font-size: 1.5rem
+	font-family: 'Francois One', sans-serif
+	text-shadow: 0 1px $cocoa
+
+.desc
+	font-size: 0.8rem
+
+.field-group
+	margin-bottom: 0.5rem
+
+a:link
+	text-decoration: none
+	color: $ui-color
+
+#content
+	position: relative
+	height: 100%
+
+.icon-reveal-container
+	.icon-reveal-group
+		position: relative
+		display: inline-block
+		top: 2px
+		img
+			opacity: 0.2
+			margin-right: 5px
+			&.icon-reveal-hover
+				position: absolute
+				left: 0
+				top: 0
+				opacity: 0
+			&.icon-reveal-glow
+				position: absolute
+				left: -8px
+				top: -8px
+				opacity: 0.01
+				z-index: 2
+	&:hover
+		.icon-reveal-group 
+			.icon-reveal-hover 
+				opacity: 1
+			.icon-reveal-glow
+				opacity: 0.5
+
+input
+	border-width: 0px
+	border-bottom: 1px solid white
+	background-color: transparent
+	padding: 2px
+
+ul
+	list-style-type: none
+	padding: 0
+	margin: 0

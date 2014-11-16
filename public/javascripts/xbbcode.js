@@ -197,7 +197,8 @@ var XBBCODE = (function() {
         },
         "quote": {
             openTag: function(params,content) {
-                return '<blockquote class="xbbcode-blockquote">';
+                return '<p class="xbbcode-blockquote-label">' + params.substr(1) + ' said:</p>' + 
+                    '<blockquote class="xbbcode-blockquote">';
             },
             closeTag: function(params,content) {
                 return '</blockquote>';

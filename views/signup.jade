@@ -1,32 +1,36 @@
 extends layout
 
+block append links
+	link(rel='stylesheet', href='/stylesheets/login.css')
+
 block inner-content
-	form#signup(action="/signup", method="post")
-		#user-fields.field-group
-			.field#username
-				label Username
-				input(name="username")
-			.field#password
-				label Password
-				input(type="password", name="password")
-			.field#confirm
-				label Confirm password
-				input(type="password", name="confirm")
-		//
-			#character-fields.field-group
-				.field#character-name
-					label Character name
-					input(name="character-name")
-			#character-outfit-creation
-				#select-prev
-					button#prev-hair
-					button#prev-face
-					button#prev-top
-					button#prev-bottom
-				img#outfit-preview( src="/images/creationpreview.png" )
-				#select-next
-					button#next-hair
-					button#next-face
-					button#next-top
-					button#next-bottom
-		button#submit-signup Signup!
+	#inner-content
+		form#signup(action="/signup", method="post")
+			#user-fields.field-group
+				.field#username
+					label Username
+					input(name="username")
+				.field#password
+					label Password
+					input(type="password", name="password")
+				.field#confirm
+					label Confirm password
+					input(type="password", name="confirm")
+			//
+				#character-fields.field-group
+					.field#character-name
+						label Character name
+						input(name="character-name")
+				#character-outfit-creation
+					#select-prev
+						button#prev-hair
+						button#prev-face
+						button#prev-top
+						button#prev-bottom
+					img#outfit-preview( src="/images/creationpreview.png" )
+					#select-next
+						button#next-hair
+						button#next-face
+						button#next-top
+						button#next-bottom
+			button#submit-signup Signup!

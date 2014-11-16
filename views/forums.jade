@@ -1,17 +1,21 @@
 extends layout
 
+block append links
+	link(rel='stylesheet', href='/stylesheets/forums.css')
+
 mixin forum(fobj, align)
 	.subforum
 		a.link-med(href="/forums/subforum") Forum
 		p.desc Hello, I am a forum
 	
 block inner-content
-	- for (var i = 0; i < threads.length; i++)
-		.forum-section
-			.forum-header
-				h1 Hello
-			.forum-subforums
-				- for (var i = 0; i < 3; i++)
-					.forum-row
-						mixin forum("")
-						mixin forum("")
+	#inner-content
+		- for (var i = 0; i < threads.length; i++)
+			.forum-section
+				.forum-header
+					h1 Hello
+				.forum-subforums
+					- for (var i = 0; i < 3; i++)
+						.forum-row
+							mixin forum("")
+							mixin forum("")

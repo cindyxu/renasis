@@ -1,21 +1,46 @@
-- if (dir !== "left")
-	.avatar
-		img(src = "/images/testout.png")
-.post
-	form#post-form( method="post" )
-		- if (context === "new-thread")
-			label Thread title
-			input#thread-alias(name="thread-alias")
-		#post-edit-section
-			#post-emotes
-				- var emotesList = ["happy", "sad", "tongue", "angry", "surprised", "cool", "oops", "blush", "glum", "sick"];
-				- for (var i = 0; i < emotesList.length; i++)
-					a( href=emotesList[i] )
-						img( src="/images/emotes/" + emotesList[i] + ".png" )
-			textarea#message-bb( name="message-bb" placeHolder="Write something!" )
-		#post-preview-section
-		button#preview-post-button Preview
-		button#submit-post-button Submit
-- if (dir === "left")
-	.avatar
-		img(src = "/images/testout.png")
+#new-post(class = context)
+	.post-container.left
+		.avatar
+			img(src = "/images/testout.png")
+		.post
+			form#post-form( method="post" )
+				- if (context === "new-thread")
+					label Thread title
+					input#thread-alias(name="thread-alias")
+				#post-edit-section
+					#post-emotes
+						- var emotesList = ["happy", "sad", "tongue", "angry", "surprised", "cool", "oops", "blush", "glum", "sick"];
+						- for (var i = 0; i < emotesList.length; i++)
+							a( href=emotesList[i] )
+								img( src="/images/emotes/" + emotesList[i] + ".png" )
+					.bubble
+						textarea#message-bb( name="message-bb" placeHolder="Write something!" )
+				#post-preview-section
+					.bubble
+
+				- if (thread)
+					input#last-post-id( name="last-post-id" type="hidden" value=thread.posts[thread.posts.length-1].post_id )
+				button#preview-post-button Preview
+				button#submit-post-button Submit
+		- if (context === "append-thread")
+
+			input#event-context( name="event[context]" type="hidden" )
+
+			// maybe extract out in the future
+			input#battle-action( name="event[action]" type="hidden" )
+			input#battle-action-selection( name="event[selection]" type="hidden" )
+			input#battle-action-targets( name="event[targets]" type="hidden" )
+
+			#battle-action-select
+				#battle-action-list
+					ul
+						- each val in ["skill", "item", "run"]
+							li.icon-reveal-container
+								.icon-reveal-group
+									img.icon-reveal-glow( src="/images/ui/glow.png" )
+									img( src="/images/ui/#{val}_outline.png" )
+									img.icon-reveal-hover( src="/images/ui/#{val}.png" )
+								span= val.toUpperCase()
+				#battle-action-selections-list
+					each sk in skills
+						img.select-skill( src="/images/skills/#{sk.skill_alias}.png", data-skill-id=sk.skill_id )

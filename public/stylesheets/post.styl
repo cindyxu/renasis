@@ -1,0 +1,118 @@
+.post-container
+	display: block
+	position: relative
+	min-height: $avatar-height
+	.post
+		.post-links
+			text-align: right
+			a
+				text-align: center
+				display: inline-block
+				margin-left: 0.5rem
+				font-size: 0.6rem
+		.bubble
+			background-color: white
+			border: 1px solid #dddddd
+			border-bottom: 1px solid #aaaaaa
+			box-shadow(0 5px 0 rgba(0, 0, 0, 0.1))
+			padding: 1rem
+			border-radius 15px
+			min-height: 100px
+			min-width: 400px
+			font-size: 12px
+			img.post-emote
+				margin: 0 2px
+		min-height: $avatar-height
+	.forum-event
+		padding: 1rem
+		font-size: 12px
+		border-left-width: 0px
+		&.battle
+			background-color: #ffd4cc
+			border-bottom: 1px solid #cc0000
+
+	.avatar
+		width: $avatar-width
+		height: $avatar-height
+		position: absolute
+		top: 0
+
+#new-post
+	margin-left $nav-bar-width
+	&.append-thread
+		bottom: -100%
+		position: fixed
+		width: 100%
+	&.new-thread
+	.post-container .post
+		margin-left: $avatar-width
+	.post-container
+		margin-left: 1rem
+		padding-left: 1.5rem
+		padding-top: 0.5rem
+		padding-right: 40%
+		border-radius(3rem 0 0 0)
+		background-color: $ui-color
+		#battle-action-select
+			padding: 1rem
+			position: absolute
+			right: 0
+			top: 0
+			text-align: left
+			width: 40%
+			height: 100%
+			#battle-action-list
+				display: inline-block
+				margin-right: 1rem
+				ul
+					li
+						color: orange
+						padding-left: 24px
+						padding-top: 0.2rem
+						padding-bottom: 0.2rem
+			#battle-action-selections-list
+				vertical-align: top
+				display: inline-block
+				.select-skill
+					border: 5px solid black
+					&:hover
+						border: 5px solid red
+					&:active, &.selected-skill
+						border: 5px solid yellow
+
+form#post-form
+	#post-emotes
+		margin: 0.1rem 0
+		a
+			outline: 0
+			img
+				position: relative
+				padding: 3px 3px
+				border-radius(6px)
+				&:hover
+					background-color: #ffff99
+	text-align: left
+	#thread-alias
+		border-width: 0
+		border-top: 1px solid $ui-text-color
+		border-left: 1px solid $tan
+		border-right: 1px solid $tan
+		border-bottom: 1px solid $pale-tan
+		padding: 5px
+		width: 100%
+	textarea#message-bb
+		width: 100%
+		min-height: 6rem
+		border-width: 0
+		border-top: 1px solid $ui-text-color
+		border-left: 1px solid $tan
+		border-bottom: 1px solid $pale-tan
+		border-right: 1px solid $tan
+		border-radius 15px
+		padding: 15px
+		outline: 0
+		font-size: 12px
+		font-family: "Ayuthaya"
+	#post-preview-section
+		display: none
+		padding: 2rem 0

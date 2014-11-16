@@ -4,8 +4,6 @@ module.exports = [
 		"species_alias" : "human",
 		
 		"battle_stats" : {
-			"max_hp" : 10,
-			"max_mana" : 10,
 			"str" : 1,
 			"vit" : 1,
 			"dex" : 1,
@@ -19,8 +17,6 @@ module.exports = [
 		"species_alias" : "bear",
 		
 		"battle_stats" : {
-			"max_hp" : 10,
-			"max_mana" : 10,
 			"str" : 1,
 			"vit" : 1,
 			"dex" : 1,

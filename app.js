@@ -37,6 +37,26 @@ _.mixin({
 			}
 		});
 		return idx;
+	},
+
+	deferAll: function(obj, iterator, callback) {
+		console.log("HEY");
+		if (obj.length === 0) callback();
+
+		var finished = 0;
+		var callbackIntermediate = function() {
+			console.log("FINSIHED");
+			finished++;
+			if (finished === obj.length) {
+				callback();
+			}
+		};
+
+		console.log("HIYA", obj.length);
+		for (var i = 0; i < obj.length; i++) {
+			console.log("RUN");
+			iterator(obj[i], callbackIntermediate);
+		}
 	}
 });
 
@@ -50,6 +70,9 @@ var utils = {
 	"bcrypt" : bcrypt,
 	"crypto" : crypto,
 	"debug" : debug };
+
+var app = express();
+utils.app = app;
 
 utils.config = require('./config.js');
 utils.constants = require('./routes/helpers/constants');
@@ -68,7 +91,8 @@ utils.userHelper = require('./routes/helpers/user')(utils);
 utils.creationHelper = require('./routes/helpers/creation')(utils);
 utils.wardrobeHelper = require('./routes/helpers/wardrobe')(utils);
 utils.forumHelper = require('./routes/helpers/forum')(utils);
-utils.encountersHelper = require('./routes/helpers/encounters')(utils);
+utils.battleHelper = require('./routes/helpers/battle')(utils);
+utils.eventHelper = require('./routes/helpers/events')(utils);
 var wardrobe = require('./routes/wardrobe')(utils);
 var user = require('./routes/user')(utils);
 var forum = require('./routes/forum')(utils);
@@ -99,9 +123,6 @@ db.serialize(function() {
 		});
 	});
 });
-
-
-var app = express();
 
 // all environments
 //app.set('port', process.env.PORT || 3000);

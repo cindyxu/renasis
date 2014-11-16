@@ -2,8 +2,12 @@
     font-weight:bold;
 }
 
-.xbbcode-blockquote {
+.xbbcode-blockquote-label {
+	
+}
 
+.xbbcode-blockquote {
+	border: 1px solid #cccccc;
 }
 
 .xbbcode-code {

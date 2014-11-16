@@ -1,14 +1,16 @@
-- if (lr === "left")
+.post-container(class=lr, id="post-#{post.post_id}")
 	.avatar
 		img(src="/images/testout.png")
-.post-links
-	a(href="fake")
-		img(src='/images/bunny.png')
-	a(href="fake")
-		img(src='/images/bunny.png')
-	a(href="fake")
-div.post
-	p.post-message= post.message_bb
-- if (lr === "right")
-	.avatar
-		img(src="/images/testout.png")
+	div.post
+		.post-links
+			a(href="fake")
+				img(src='/images/ui/quote.png')
+				p quote
+			a(href="fake")
+				img(src='/images/ui/report.png')
+				p report
+			a(href="fake")
+		.bubble
+			p.post-message= post.message_bb
+	- if (post.actor_id)
+		include ./battle_step

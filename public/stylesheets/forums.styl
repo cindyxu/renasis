@@ -1,0 +1,67 @@
+@import "base"
+@import "layout"
+
+#forum-bar
+	padding: 0 $std-margin-side
+	padding-bottom: 1rem
+
+	#forum-desc
+		display: inline
+		float: left
+		#forum-name
+			font-size: 2rem
+			font-family: 'Francois One', sans-serif
+			text-shadow: 0 1px $cocoa
+
+	#forum-actions
+		display: inline-block
+		text-align: right
+		float: right
+		a
+			display: inline-block
+			background-color: $ui-color
+			font-size: 1.5rem
+			padding: 0.8rem 1.6rem
+			margin: 1px
+			color: $tan
+			border-radius 10px
+
+		a#new-thread
+			margin-left: 1rem
+
+.forum-section
+	margin: 0 auto
+	width: 80%;
+	max-width: 50rem
+
+	a:link
+		color: #b96c35
+		font-weight: bold
+		text-align: center
+		text-decoration: none
+
+	.forum-header
+		padding: 0 3em
+		position: relative
+		top: 1.5rem
+
+	.forum-subforums
+		border-radius 2px
+		background-color: $pale-tan
+		border: 1px solid $ui-text-color
+		padding: 2rem 0 1rem 0
+
+		.forum-row
+			border-bottom: 1px solid $ui-text-color
+
+			&:last-child
+				border-bottom-width: 0
+
+			.subforum
+				&:first-child
+					border-right: 1px solid $ui-text-color
+
+				padding: 1rem 2rem
+				margin: 0 2%
+				width: 45.9%
+				display: inline-block

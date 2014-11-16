@@ -1,0 +1,42 @@
+@import "base"
+@import "layout"
+
+form#login
+	background-color: $ui-color
+	padding: 2rem 1rem
+	text-align: right
+	margin: 0 auto
+	display: inline-block
+	color: $ui-text-color
+	input
+		font-size: 1.5rem
+		margin-left: 1rem
+	#submit-login
+		margin: 0
+		color: black
+		font-size: 1.5rem
+		border-width: 0
+		margin-top: 1rem
+		width: 100%
+
+form#signup
+	text-align: right
+	display: inline-block
+	margin: 0 auto
+	button#submit-signup
+		background-color: $aqua
+		border-width: 0
+	#character-outfit-creation
+		> *
+			vertical-align: top
+		#select-prev, #select-next
+			width: 1rem
+			display: inline-block
+		button#prev-hair, button#next-hair
+			margin-top: 80px
+		button#prev-face, button#next-face
+			margin-top: 5px
+		button#prev-top, button#next-top
+			margin-top: 17px
+		button#prev-bottom, button#next-bottom
+			margin-top: 10px

@@ -95,53 +95,62 @@ module.exports = function(utils) {
 			]}}
 		},
 
-		battles: {
-			fields : {
-				"battle_id" : { "type" : dt.INTEGER, "constraints" : [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
-				"turns" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
-				// 1 if player won, 0 if player lost
-				"outcome" : { "type" : dt.INTEGER }
-			},
-			foreignKeys : {
-				"thread_id" : { "type" : dt.INTEGER, "table" : "threads", "on" : "thread_id", "constraints" : cst.NOT_NULL },
-				"first_post_id" : { "type" : dt.INTEGER, "table" : "posts", "on" : "post_id", "constraints" : cst.NOT_NULL },
-				"last_post_id" : { "type" : dt.INTEGER, "table" : "posts", "on" : "post_id", "constraints" : cst.NOT_NULL }
-			}
-		},
-
-		battle_steps: {
-			fields : {
-				"turn" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
-				"step_order" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
-				
-				// one of: "CHALLENGE", "SKILL", "ITEM", "ESCAPE"
-				"action" : { "type" : dt.TEXT, "constraints" : cst.NOT_NULL },
-				
-				// one of: "HIT", "MISS", "ESCAPED", "TRAPPED"
-				// if we allow AOE skills, we may have to create another table
-				// for ally skills - eg. healing - this can/should be null
-				"outcome" : { "type" : dt.TEXT },
-				
-				"delta_hp" : { "type" : dt.INTEGER },
-				"delta_mana" : { "type" : dt.INTEGER },
-				"delta_status_effects" : { "type" : dt.TEXT },
-
-				"target_delta_hp" : { "type" : dt.INTEGER },
-				"target_delta_mana" : { "type" : dt.INTEGER },
-				"target_delta_status_effects" : { "type" : dt.TEXT },
-			},
-			foreignKeys : {
-				"post_id" : { "type" : dt.INTEGER, "table" : "posts", "on" : "post_id", "constraints" : cst.NOT_NULL },
-				"actor_id" : { "type" : dt.INTEGER, "table" : "entities", "on" : "entity_id", "constraints" : cst.NOT_NULL },
-				"target_id" : { "type" : dt.INTEGER, "table" : "entities", "on" : "entity_id" }
-			}
-		},
-
 		species: {
 			fields: {
 				"species_id" : { "type" : dt.INTEGER, "constraints" : [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
 				"species_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
 				"species_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL }
+			}
+		},
+
+		forums: {
+			fields: {
+				"forum_name" : { "type": dt.TEXT, "constraints": cst.PRIMARY_KEY },
+				"forum_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL }
+			}
+		},
+
+		subforums: {
+			fields: {
+				"subforum_name" : { "type": dt.TEXT, "constraints": cst.PRIMARY_KEY },
+				"subforum_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
+				"forum_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
+				"forum_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL }
+			}
+		},
+
+		threads: {
+			fields: {
+				"thread_id" : { "type": dt.INTEGER, "constraints": [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
+				"thread_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
+				"thread_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
+				"creator_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
+				"last_poster_name" : { "type": dt.TEXT }
+			},
+			foreignKeys: {
+				"subforum_name" : { "type": dt.INTEGER, "table": "subforums", "on": "subforum_name", "constraints": cst.NOT_NULL },
+				"creator_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints": cst.NOT_NULL },
+				"last_poster_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id" }
+			},
+			timestamps: true
+		},
+
+		posts: {
+			fields: {
+				"post_id": { "type": dt.INTEGER, "constraints": [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
+				"poster_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
+				"message_bb" : { "type": dt.TEXT },
+				"post_color" : { "type": dt.TEXT, "constraints": cst.NOT_NULL, "default": "'#ffffff'" }
+			},
+			foreignKeys: {
+				"thread_id" : { "type": dt.INTEGER, "table": "threads", "on": "thread_id", "constraints": cst.NOT_NULL },
+				"poster_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints": cst.NOT_NULL }
+			},
+			timestamps: true,
+			triggers: {
+				INSERT: { AFTER: [
+					"UPDATE threads SET last_poster_id = new.poster_id, last_poster_name = new.poster_name WHERE thread_id = new.thread_id"
+				]}
 			}
 		},
 
@@ -157,27 +166,46 @@ module.exports = function(utils) {
 			}
 		},
 
+		battle_steps: {
+			fields : {
+				// one of: "CHALLENGE", "SKILL", "ITEM", "ESCAPE"
+				"action" : { "type" : dt.TEXT, "constraints" : cst.NOT_NULL },
+				
+				// one of: "HIT", "MISS", "ESCAPED", "TRAPPED"
+				"outcome" : { "type" : dt.TEXT }
+			},
+			foreignKeys : {
+				"post_id" : { "type" : dt.INTEGER, "table" : "posts", "on" : "post_id", "constraints" : cst.NOT_NULL },
+				"actor_id" : { "type" : dt.INTEGER, "table" : "entities", "on" : "entity_id", "constraints" : cst.NOT_NULL }
+			}
+		},
+
+		battle_step_affects: {
+			fields: {
+				"delta_hp" : { "type" : dt.INTEGER },
+				"delta_mana" : { "type" : dt.INTEGER }
+			},
+			foreignKeys: {
+				"post_id" : { "type" : dt.INTEGER, "table" : "posts", "on" : "post_id", "constraints" : cst.NOT_NULL },
+				"target_id" : { "type" : dt.INTEGER, "table" : "entities", "on" : "entity_id" }
+			}
+		},
+
 		// weapons, shields, etc. basically battle stats for relevant items
 		battlegear_blueprints: {
 			fields: {
 				// required stats to equip
-				"str_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"vit_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"dex_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"agi_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"mag_req" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				// base stat bonuses of this weapon
-				"str_base" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"vit_base" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"dex_base" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"agi_base" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"mag_base" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
-				// bonus proportional to stats of user
-				"str_mult" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"vit_mult" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"dex_mult" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"agi_mult" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0 },
-				"mag_mult" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0 }
+				"req_str" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"req_vit" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"req_dex" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"req_agi" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"req_mag" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				// stat bonuses of this weapon
+				"boost_str" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"boost_vit" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"boost_dex" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"boost_agi" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
+				"boost_mag" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 }
 			},
 			foreignKeys: {
 				"item_blueprint_id" : { "type" : dt.INTEGER, "table" : "item_blueprints", "on" : "item_blueprint_id", "constraints" : cst.PRIMARY_KEY }
@@ -189,7 +217,7 @@ module.exports = function(utils) {
 			foreignKeys: {
 				// if battlegear_blueprint_id != null, this skill is available when battlegear is equipped
 				// if species_id != null, this skill is native to entities of that species
-				"battlegear_blueprint_id" : { "type" : dt.INTEGER, "table" : "battlegear_blueprints", "on" : "battlegear_blueprint_id" },
+				"item_blueprint_id" : { "type" : dt.INTEGER, "table" : "item_blueprints", "on" : "battlegear_blueprint_id" },
 				"species_id" : { "type" : dt.INTEGER, "table" : "species", "on" : "species_id" },
 				"skill_id" : { "type" : dt.INTEGER, "table" : "skills", "on" : "skill_id", "constraints" : cst.NOT_NULL }
 			}
@@ -212,8 +240,8 @@ module.exports = function(utils) {
 		skills: {
 			fields: {
 				"skill_id" : { "type" : dt.INTEGER, "constraints" : [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
-				"skill_alias" : { "type" : dt.TEXT, "constraints" : cst.NOT_NULL },
-				"skill_name" : { "type" : dt.TEXT, "constraints" : cst.NOT_NULL },
+				"skill_alias" : { "type" : dt.TEXT, "constraints" : [cst.NOT_NULL, cst.UNIQUE] },
+				"skill_name" : { "type" : dt.TEXT, "constraints" : [cst.NOT_NULL, cst.UNIQUE] },
 				"skill_desc" : { "type" : dt.TEXT },
 				"mana_cost" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
 				"active" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 0 },
@@ -225,11 +253,43 @@ module.exports = function(utils) {
 			}
 		},
 
+		skill_affects: {
+			fields: {
+				// TARGET, RANDOM, SELF
+				"affects" : { "type" : dt.TEXT, "constraints" : cst.NOT_NULL, "default" : "TARGET" },
+				"hit_formula" : { "type" : dt.TEXT },
+				"critical_formula" : { "type" : dt.TEXT },
+				// must expose: hp, mana, str, vit, dex, agi, mag. this will be used as eval()
+				"delta_hp_formula" : { "type" : dt.TEXT },
+				"delta_mana_formula" : { "type" : dt.TEXT }
+				
+			},
+			foreignKeys: {
+				"skill_id" : { "type": dt.INTEGER, "table": "skills", "on": "skill_id", "constraints" : [cst.UNIQUE, cst.NOT_NULL] },
+			}
+		},
+		// includes debuffs
+		skill_buffs: {
+			fields: {
+				"turns" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
+				"affects" : { "type" : dt.TEXT, "constraints" : cst.NOT_NULL, "default" : "TARGET" },
+				
+				"hit_formula" : { "type" : dt.TEXT },
+				
+				"buff_str_formula" : { "type" : dt.TEXT },
+				"buff_vit_formula" : { "type" : dt.TEXT },
+				"buff_dex_formula" : { "type" : dt.TEXT },
+				"buff_agi_formula" : { "type" : dt.TEXT },
+				"buff_mag_formula" : { "type" : dt.TEXT }
+			},
+			foreignKeys: {
+				"skill_id" : { "type": dt.INTEGER, "table": "skills", "on": "skill_id", "constraints" : [cst.UNIQUE, cst.NOT_NULL] },
+			}
+		},
+
 		// for the most part, all entities have battle stats.
 		battle_stats: {
 			fields: {
-				"max_hp" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : schemas.defaults.battle_stats.hp },
-				"max_mana" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : schemas.defaults.battle_stats.mana },
 				"str" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
 				"vit" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
 				"dex" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL, "default" : 1 },
@@ -240,7 +300,8 @@ module.exports = function(utils) {
 				"entity_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints" : [cst.UNIQUE, cst.NOT_NULL] },
 			},
 			triggers: { INSERT: { AFTER: [
-				"INSERT INTO battle_statuses (hp, mana, entity_id) VALUES (new.max_hp, new.max_mana, new.entity_id)"
+				// TODO: PROGRAMATICALLY DETERMINE HP & MANA
+				"INSERT INTO battle_statuses (hp, mana, entity_id) VALUES (10, 10, new.entity_id)"
 			]}}
 		},
 
@@ -248,11 +309,11 @@ module.exports = function(utils) {
 		// "leveling up" is independent to each attribute!
 		battle_stat_growths: {
 			fields: {
-				"str" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
-				"vit" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
-				"dex" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
-				"agi" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
-				"mag" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
+				"growth_str" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
+				"growth_vit" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
+				"growth_dex" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
+				"growth_agi" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
+				"growth_mag" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 0.0 },
 				// growth = stat_growth / (degrade * stat_level) !! NON-ZERO
 				"degrade" : { "type" : dt.REAL, "constraints" : cst.NOT_NULL, "default" : 1 }
 			},
@@ -275,6 +336,16 @@ module.exports = function(utils) {
 			},
 			foreignKeys: {
 				"entity_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints" : [cst.UNIQUE, cst.NOT_NULL] }
+			}
+		},
+
+		battle_status_buffs: {
+			fields: {
+				"buff_str" : { "type" : dt.INTEGER },
+				"buff_vit" : { "type" : dt.INTEGER },
+				"buff_dex" : { "type" : dt.INTEGER },
+				"buff_agi" : { "type" : dt.INTEGER },
+				"buff_mag" : { "type" : dt.INTEGER }
 			}
 		},
 
@@ -341,54 +412,17 @@ module.exports = function(utils) {
 			}
 		},
 
-		forums: {
+		furniture_blueprints: {
 			fields: {
-				"forum_name" : { "type": dt.TEXT, "constraints": cst.PRIMARY_KEY },
-				"forum_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL }
-			}
-		},
-
-		subforums: {
-			fields: {
-				"subforum_name" : { "type": dt.TEXT, "constraints": cst.PRIMARY_KEY },
-				"subforum_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
-				"forum_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
-				"forum_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL }
-			}
-		},
-
-		threads: {
-			fields: {
-				"thread_id" : { "type": dt.INTEGER, "constraints": [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
-				"thread_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
-				"thread_alias" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
-				"creator_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
-				"last_poster_name" : { "type": dt.TEXT }
+				"base_rows" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
+				"base_cols" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
+				"base_offset_x" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
+				"base_offset_y" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL },
+				// bits
+				"base_tiles_bits" : { "type" : dt.INTEGER, "constraints" : cst.NOT_NULL }
 			},
 			foreignKeys: {
-				"subforum_name" : { "type": dt.INTEGER, "table": "subforums", "on": "subforum_name", "constraints": cst.NOT_NULL },
-				"creator_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints": cst.NOT_NULL },
-				"last_poster_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id" }
-			},
-			timestamps: true
-		},
-
-		posts: {
-			fields: {
-				"post_id": { "type": dt.INTEGER, "constraints": [cst.PRIMARY_KEY, cst.AUTOINCREMENT] },
-				"poster_name" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
-				"message_bb" : { "type": dt.TEXT, "constraints": cst.NOT_NULL },
-				"post_color" : { "type": dt.TEXT, "constraints": cst.NOT_NULL, "default": "'#ffffff'" }
-			},
-			foreignKeys: {
-				"thread_id" : { "type": dt.INTEGER, "table": "threads", "on": "thread_id", "constraints": cst.NOT_NULL },
-				"poster_id" : { "type": dt.INTEGER, "table": "entities", "on": "entity_id", "constraints": cst.NOT_NULL }
-			},
-			timestamps: true,
-			triggers: {
-				INSERT: { AFTER: [
-					"UPDATE threads SET last_poster_id = new.poster_id, last_poster_name = new.poster_name WHERE thread_id = new.thread_id"
-				]}
+				"item_blueprint_id" : { "type": dt.INTEGER, "table": "items", "on": "item_id", "constraints": cst.NOT_NULL }
 			}
 		}
 	};

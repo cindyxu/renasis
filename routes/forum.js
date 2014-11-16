@@ -8,7 +8,9 @@ module.exports = function(utils) {
 	var forumExport = {};
 	var schemas = utils.schemas;
 	var schemaDefaults = schemas.defaults;
-	var encountersHelper = utils.encountersHelper;
+	var eventHelper = utils.eventHelper;
+	var battleHelper = utils.battleHelper;
+	var app = utils.app;
 
 	forumExport.newThread = function(req, res) {
 		userHelper.authenticate(req, res, userHelper.REQUIRES_CHARACTER, function(userObj) {
@@ -36,26 +38,47 @@ module.exports = function(utils) {
 	};
 
 	forumExport.createPost = function(req, res) {
-		console.log("WHAT?");
 		userHelper.authenticate(req, res, userHelper.REQUIRES_CHARACTER, function(userObj) {
 			if (!userObj) return;
-			var threadId = req.params.thread_id;
-			forumHelper.createPost(req.body["message-bb"], 
+			var threadId = parseInt(req.params.thread_id);
+			var lastPostId = parseInt(req.body["last-post-id"]);
+			debug("creating post with message:", req.body["message-bb"]);
+			forumHelper.createPost(req.body["message-bb"],
 				threadId,
 				userObj.primary_character_id,
 				userObj.primary_character.entity_name,
-				function(err, results) {
-					encountersHelper.query(
-						req.params.subforum,
+				function(err, postObj) {
+					eventHelper.resolve(
 						userObj.primary_character_id, 
 						threadId,
-						results.post_id,
-						function(err, resObj) {
-							app.render("includes/post", req.body, function(err, html) {
-								app.render("includes/encounter_battle_start", resObj, function(err, ehtml) {
-									res.send(html + ehtml);
-								});
-							});
+						postObj.post_id, 
+						req.body.event, 
+						function(err, resolved) {
+							eventHelper.query(
+								req.params.subforum,
+								userObj.primary_character_id, 
+								threadId,
+								postObj.post_id,
+								function(err, encountered) {
+									forumHelper.findThreadWithPostsAfter(threadId, lastPostId, function(err, thread) {
+										battleHelper.findUsableSkills(userObj.primary_character_id, function(err, skills) {
+											var renderedHtml = "";
+											var newPosts = thread.posts;
+											var renderFunction = function(newPost, callback) {
+												app.render("includes/post", { "post" : newPost }, function(err, html) {
+													if (err) { console.log(err); return; }
+													renderedHtml += html;
+													callback();
+												});
+											};
+
+											_.deferAll(newPosts, renderFunction, function() {
+												res.send({ "postContent" : renderedHtml, "skills" : skills });
+											});
+										});
+									});
+								}
+							);
 						}
 					);
 				}
@@ -86,7 +109,14 @@ module.exports = function(utils) {
 			var threadId = req.params.thread_id;
 			var page = req.body.page || 1;
 			forumHelper.findThreadWithPosts(threadId, (page-1) * prefs.posts_per_page, prefs.posts_per_page, function(err, thread) {
-				res.render("thread", { "thread" : thread });
+				if (userObj) {
+					battleHelper.findUsableSkills(userObj.primary_character_id, function(err, skills) {
+						console.log(skills);
+						res.render("thread", { "thread" : thread, "skills" : skills });
+					});
+				} else {
+					res.render("thread", { "thread" : thread });
+				}
 			});
 		});
 	};

@@ -222,8 +222,8 @@ module.exports = function(utils) {
 					if (err) { console.log(err); return; }
 					var skillId = this.lastID;
 					var bg = skill.battle_stat_growths;
-					db.run('INSERT INTO battle_stat_growths (skill_id, str, vit, dex, agi, mag, degrade) ' +
-						'VALUES (?, ?, ?, ?, ?, ?, ?)', [skillId, bg.str, bg.vit, bg.dex, bg.agi, bg.mag, bg.degrade],
+					db.run('INSERT INTO battle_stat_growths (skill_id, growth_str, growth_vit, growth_dex, growth_agi, growth_mag, degrade) ' +
+						'VALUES (?, ?, ?, ?, ?, ?, ?)', [skillId, bg.growth_str, bg.growth_vit, bg.growth_dex, bg.growth_agi, bg.growth_mag, bg.degrade],
 						function(err) {
 							if (err) { console.log(err); return; }
 							addSkill(i+1);
@@ -348,7 +348,7 @@ module.exports = function(utils) {
 				return;
 			}
 
-			query = "INSERT INTO carriers_skills (battlegear_blueprint_id, skill_id) VALUES " + 
+			query = "INSERT INTO carriers_skills (item_blueprint_id, skill_id) VALUES " + 
 				_str.join(', ', _.map(skillNames, function(sn) {
 					return '(' + battlegearId + ', ' + skillIds[sn] + ')';
 			}));
@@ -362,20 +362,23 @@ module.exports = function(utils) {
 		var addBattlegearBlueprint = function(battlegear, itemBlueprintId, callback) {
 
 			var query = 'INSERT INTO battlegear_blueprints (item_blueprint_id, ' +
-				'str_base, vit_base, dex_base, agi_base, mag_base, ' +
-				'str_mult, vit_mult, dex_mult, agi_mult, mag_mult) VALUES (' +
+				'req_str, req_vit, req_dex, req_agi, req_mag, ' +
+				'boost_str, boost_vit, boost_dex, boost_agi, boost_mag) VALUES (' +
 				itemBlueprintId + ', ' +
-				battlegear.str_base + ', ' +
-				battlegear.vit_base + ', ' +
-				battlegear.dex_base + ', ' +
-				battlegear.agi_base + ', ' +
-				battlegear.mag_base + ', ' +
+				
+				(battlegear.req_str || 0) + ', ' +
+				(battlegear.req_vit || 0) + ', ' +
+				(battlegear.req_dex || 0) + ', ' +
+				(battlegear.req_agi || 0) + ', ' +
+				(battlegear.req_mag || 0) + ', ' +
 
-				battlegear.str_mult + ', ' +
-				battlegear.vit_mult + ', ' +
-				battlegear.dex_mult + ', ' +
-				battlegear.agi_mult + ', ' +
-				battlegear.mag_mult + ')';
+				(battlegear.boost_str || 0) + ', ' +
+				(battlegear.boost_vit || 0) + ', ' +
+				(battlegear.boost_dex || 0) + ', ' +
+				(battlegear.boost_agi || 0) + ', ' +
+				(battlegear.boost_mag || 0) + ')';
+
+			console.log(query);
 
 			db.run(query, function(err) {
 					if (err) { console.log("error inserting battlegear", err); return; }

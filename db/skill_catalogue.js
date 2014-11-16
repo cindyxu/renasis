@@ -4,11 +4,11 @@ module.exports = [
 		"skill_alias" : "slash",
 		"active" : 1,
 		"battle_stat_growths" : {
-			"str" : 0.5,
-			"vit" : 0,
-			"dex" : 0.3,
-			"agi" : 0.1,
-			"mag" : 0,
+			"growth_str" : 0.5,
+			"growth_vit" : 0,
+			"growth_dex" : 0.3,
+			"growth_agi" : 0.1,
+			"growth_mag" : 0,
 			"degrade" : 1
 		},
 		use: function(battle) {
@@ -19,11 +19,11 @@ module.exports = [
 		"skill_alias" : "swing",
 		"active" : 1,
 		"battle_stat_growths" : {
-			"str" : 0.5,
-			"vit" : 0,
-			"dex" : 0.3,
-			"agi" : 0.1,
-			"mag" : 0,
+			"growth_str" : 0.5,
+			"growth_vit" : 0,
+			"growth_dex" : 0.3,
+			"growth_agi" : 0.1,
+			"growth_mag" : 0,
 			"degrade" : 1
 		},
 		use: function(battle) {

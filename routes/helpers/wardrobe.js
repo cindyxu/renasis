@@ -27,7 +27,7 @@ module.exports = function(utils) {
 	wardrobeHelper.GET_ITEMS = 1 << 2;
 	wardrobeHelper.GET_ITEM_BLUEPRINTS = 1 << 3;
 
-	// converts pose_str into an object
+	// converts pose_str from string to object
 	wardrobeHelper.parsePose = function(poseStr) {
 		if (!poseStr || poseStr.length === 0) return wardrobeHelper.parsePose(defaultPose);
 		var groupSegs = poseStr.split(';');
@@ -39,7 +39,7 @@ module.exports = function(utils) {
 		return pose;
 	};
 
-	// converts poses_str into an object
+	// converts poses_str from string to object
 	wardrobeHelper.parsePoseOptions = function(posesStr) {
 		var groupSegs = posesStr.split(';');
 		var groups = {};
@@ -170,7 +170,7 @@ module.exports = function(utils) {
 		});
 	};
 
-	wardrobeHelper.compGroup = function(equip, blueprint, pose, group, buf) {
+	var _compGroup = function(equip, blueprint, pose, group, buf) {
 		var poseForGroup = pose[group];
 		if (blueprint.poses[group]) {
 			var offset = blueprint.poses[group][poseForGroup];
@@ -202,7 +202,7 @@ module.exports = function(utils) {
 	wardrobeHelper.compAvatar = function(outfit, callback) {
 
 		// transparent + base
-		var buf = im(80, 100, "#ffffff00").in("-alpha", "Set");
+		var buf = im().in("public/images/base_drop_shadow.png").in("-alpha", "Set");
 
 		if (!_.isEmpty(outfit.layers)) {
 			debug("compositing outfit: ", outfit.outfitId);
@@ -215,7 +215,7 @@ module.exports = function(utils) {
 							var equip = layer[i];
 							var blueprint = layer[i].blueprint;
 							blueprint.poses = wardrobeHelper.parsePoseOptions(blueprint.poses_str);
-							wardrobeHelper.compGroup(equip, blueprint, outfit.pose, equipGroups[j], buf);
+							_compGroup(equip, blueprint, outfit.pose, equipGroups[j], buf);
 						}
 					}
 				}

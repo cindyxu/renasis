@@ -4,27 +4,40 @@ html
 		title= title
 		block links
 			script(src="/javascripts/jquery-2.1.1.min.js")
-			link(rel='stylesheet', href='/stylesheets/style.css')
 			link(rel='stylesheet', href='/stylesheets/xbbcode.css')
 	body
 		#content
 			block content
-				#nav-bar
-					ul
-						li
-							img(src="/images/testout.png")
-						li.nav-item
-							a(href="fake") HOME
-						li.nav-item
-							a(href="fake") PROFILE
-						li.nav-item
-							a(href="fake") FORUMS
-						li.nav-item
-							a(href="fake") TOWNS
-						li.nav-item
-							a(href="fake") HELLO
+				block nav-bar
+					#nav-bar
+						#nav-bar-menu
+							ul
+								- each val in ["home", "profile", "forums", "towns"]
+									li.nav-item#nav-home
+										a.icon-reveal-container(href="/#{val}")
+											.icon-reveal-group
+												img.icon-reveal-glow(src="/images/ui/glow.png")
+												img(src="/images/ui/#{val}_outline.png")
+												img.icon-reveal-hover(src="/images/ui/#{val}.png")
+											span= val.toUpperCase()
+
+						#nav-bar-status
+							#nav-bar-sprite
+								img(src="/images/ness.png")
+							#nav-bar-battle-status
+								.battle-status-bar-container
+									span HP
+									.battle-status-bar#hp-bar
+										.battle-status-bar-progress
+								.battle-status-bar-container
+									span MP
+									.battle-status-bar#mp-bar
+										.battle-status-bar-progress
+							#nav-bar-settings
+								p fx
+								p bg
 				#right-column
-					#header-bar
-						block header-bar
-					#inner-content
+					block header-bar
+						#header-bar
+					block backdrop
 						block inner-content

@@ -1,0 +1,98 @@
+#nav-bar
+	height: 100%
+	width: $nav-bar-width
+	position: fixed
+	left: 0
+	text-align: left
+	z-index: 999
+	
+#nav-bar-menu
+	ui-master()
+	border-radius(0, 0, 10px, 0)
+
+	overflow: hidden
+	box-shadow(-5px 5px 0px rgba(100, 0, 0, 0.2))
+
+	li.nav-item
+		display: block
+		padding-left: 0.5rem
+		padding-right: 0.5rem
+		border-bottom: 1px solid $ui-subtle-shadow
+		&:first-child
+			padding-top: 5px
+		&:last-child
+			border-bottom: 1px solid $ui-shadow
+			padding-bottom: 5px
+		&:hover
+			left: 2px 
+			background-color: $ui-subtle-highlight
+		a
+			display: block
+			width: 100%
+			height: 100%
+			padding-top: 0.5rem
+			padding-bottom: 0.5rem
+			span
+				background-repeat: no-repeat
+			&:hover
+				color: white
+	
+#nav-bar-status
+	ui-master()
+	position: absolute
+	bottom: 0
+	width: 100%
+	border-radius(0, 10px, 0, 0)
+	padding-top: 1rem
+	padding-bottom: 1rem
+	border-right: 1px solid $ui-subtle-shadow
+	box-shadow(-5px -5px 0px rgba(100, 0, 0, 0.2))
+	#nav-bar-sprite, #nav-bar-battle-status, #nav-bar-settings
+		padding-top: 0.5rem
+		padding-bottom: 0.5rem
+		padding-left: 0.5rem
+		padding-right: 0.7rem
+		border-bottom: 1px solid $ui-subtle-shadow
+	#nav-bar-sprite
+		width: 100%
+		text-align: center
+	#nav-bar-battle-status
+		.battle-status-bar-container
+			position: relative
+			text-align: right
+			.battle-status-bar
+				height: 0.5rem
+				background-color: white
+				display: inline-block
+				width: 4rem
+				margin-left: 0.5rem
+				text-align: left
+				.battle-status-bar-progress
+					height: 100%
+					width: 70%
+				&#hp-bar .battle-status-bar-progress
+					background-color: #ff3300
+				&#mp-bar .battle-status-bar-progress
+					background-color: #5599dd
+	#nav-bar-settings
+		border-bottom: 0
+
+#right-column
+	height: 100%
+	overflow-y: hidden
+
+#header-bar
+	overflow: auto
+	ui-header(false)
+	position: fixed
+	right: 0
+	top: 0
+	display: inline-block
+	width: inherit
+	z-index: 998
+
+#inner-content
+	overflow-y: auto
+	width: 100%
+	padding-left: $nav-bar-width
+	min-height: 100%

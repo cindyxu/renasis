@@ -5,6 +5,9 @@ block append links
 	script(src="/javascripts/seqqueue.js")
 	script(src="/javascripts/schemas.js")
 	script(src="/javascripts/dressroom.js")
+	link(rel='stylesheet', href='/stylesheets/dressroom.css')
+
+block header-bar
 
 mixin wardrobe-col()
 	#wardrobe-col
@@ -57,15 +60,17 @@ mixin equipped-item(itemEquip)
 		data-item-variety= itemEquip.variety )
 
 block inner-content
-	#dressroom
-		#dressroom-inner
-			#preview
-				#preview-inner
-					img#outfit-preview(src="/images/testout.png")
-				#preview-actions
-					button#save-as-current= "save"
-			#dressroom-fluid
-				mixin equipped-col(outfitWip)
-				mixin wardrobe-col()
+	#inner-content
+		#dressroom
+			#dressroom-inner
+				#preview
+					#preview-inner
+						img#outfit-preview(src="/images/testout.png")
+					#preview-actions
+						//
+							button#save-as-current= "save"
+				#dressroom-fluid
+					mixin equipped-col(outfitWip)
+					mixin wardrobe-col()
+					
 				
-			
