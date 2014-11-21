@@ -6,12 +6,13 @@ block append links
 
 block inner-content
 	#inner-content
-		#customize-room-container
-			canvas#customize-room( width=800, height=600 )
-			#furniture-container
-				p= "decorate!"
-			#furniture-metadata
-				.select-furniture(data-item-id=1,
+		#room-ui
+			img#wall-selected(src = "/images/ui/wall_selected.png")
+		canvas#customize-room( width=800, height=350 )
+		#furniture-container
+			p= "decorate!"
+			ul
+				li(data-item-id=1,
 					data-item-alias="Bed",
 					data-item-name="bed",
 					data-item-subcategory="bed",
@@ -20,11 +21,11 @@ block inner-content
 					data-base-rows=2,
 					data-base-cols=2,
 					data-base-tiles-bits=15)
-
 					img.furniture-thumb(src="/images/items/thumbs/furniture/bed.png")
-					img.furniture-image(src="/images/items/furniture/bed/bed.png")
+					.furniture-images
+						img.furniture-image(src="/images/items/furniture/bed/bed.png")
 
-				.select-furniture(data-item-id=2,
+				li(data-item-id=2,
 					data-item-alias="Birch floor",
 					data-item-name="birch_floor",
 					data-item-subcategory="floor",
@@ -32,26 +33,38 @@ block inner-content
 					data-base-offset-y=0,
 					data-base-rows=2,
 					data-base-cols=2)
-
 					img.furniture-thumb(src="/images/items/thumbs/furniture/birch.png")
-					img.furniture-image(src="/images/items/furniture/floor/birch1.png")
-					img.furniture-image(src="/images/items/furniture/floor/birch2.png")
-					img.furniture-image(src="/images/items/furniture/floor/birch3.png")
-					img.furniture-image(src="/images/items/furniture/floor/birch4.png")
+					.furniture-images
+						img.furniture-image(src="/images/items/furniture/floor/birch1.png")
+						img.furniture-image(src="/images/items/furniture/floor/birch2.png")
+						img.furniture-image(src="/images/items/furniture/floor/birch3.png")
+						img.furniture-image(src="/images/items/furniture/floor/birch4.png")
 
-				.select-furniture(data-item-id=3,
+				li(data-item-id=3,
 					data-item-alias="Sky wall",
 					data-item-name="sky_wall",
-					data-item-subcategory="wall",
+					data-item-subcategory="wallpaper",
 					data-base-offset-x=0, 
 					data-base-offset-y=0,
 					data-base-cols=4)
 					img.furniture-thumb(src="/images/items/thumbs/furniture/skywall.png")
-					img.furniture-image(src="/images/items/furniture/wall/sky1.png")
-					img.furniture-image(src="/images/items/furniture/wall/sky2.png")
-					img.furniture-image(src="/images/items/furniture/wall/sky3.png")
-					img.furniture-image(src="/images/items/furniture/wall/sky4.png")
-					img.furniture-image(src="/images/items/furniture/wall/sky5.png")
-					img.furniture-image(src="/images/items/furniture/wall/sky6.png")
-					img.furniture-image(src="/images/items/furniture/wall/sky7.png")
-					img.furniture-image(src="/images/items/furniture/wall/sky8.png")
+					.furniture-images
+						img.furniture-image(src="/images/items/furniture/wallpaper/sky1.png")
+						img.furniture-image(src="/images/items/furniture/wallpaper/sky2.png")
+						img.furniture-image(src="/images/items/furniture/wallpaper/sky3.png")
+						img.furniture-image(src="/images/items/furniture/wallpaper/sky4.png")
+						img.furniture-image(src="/images/items/furniture/wallpaper/sky5.png")
+						img.furniture-image(src="/images/items/furniture/wallpaper/sky6.png")
+						img.furniture-image(src="/images/items/furniture/wallpaper/sky7.png")
+						img.furniture-image(src="/images/items/furniture/wallpaper/sky8.png")
+
+				li(data-item-id=4,
+					data-item-alias="Window",
+					data-item-name="window",
+					data-item-subcategory="wall",
+					data-base-offset-x=0, 
+					data-base-offset-y=0,
+					data-base-cols=2)
+					img.furniture-thumb(src="/images/items/thumbs/furniture/window.png")
+					.furniture-images
+						img.furniture-image(src="/images/items/furniture/wall/window.png")

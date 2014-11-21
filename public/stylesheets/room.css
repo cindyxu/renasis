@@ -234,40 +234,40 @@ ul {
 #inner-content {
   text-align: center;
 }
-#furniture-metadata {
-  display: none;
-}
-#customize-room-container {
-  margin-top: 3rem;
-  position: relative;
-  display: inline-block;
-  width: 800px;
-  height: 600px;
-}
-#customize-room {
+.furniture-images,
+#room-ui {
   position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
+  left: 9999px;
 }
 #furniture-container {
   background-color: #cd9;
   color: #000;
   border-top: 1px solid #d6e3ad;
   border-bottom: 1px solid #b7c689;
-  -moz-box-sizing: content-box;
-  -webkit-box-sizing: content-box;
-  box-sizing: content-box;
-  position: absolute;
-  -webkit-border-radius: 1rem 1rem 0 0;
-  -moz-border-radius: 1rem 1rem 0 0;
-  border-radius: 1rem 1rem 0 0;
-  padding: 0.1rem;
+  -webkit-border-radius: 1rem;
+  -moz-border-radius: 1rem;
+  border-radius: 1rem;
   text-align: left;
   -webkit-box-shadow: 0 5px 0 rgba(0,0,0,0.1);
   -moz-box-shadow: 0 5px 0 rgba(0,0,0,0.1);
   box-shadow: 0 5px 0 rgba(0,0,0,0.1);
+  margin: auto;
+  width: 60%;
+  overflow: hidden;
 }
 #furniture-container p {
   padding: 0.5rem;
+}
+#furniture-container ul {
+  background-color: #fff;
+  color: #899;
+  padding: 0.5rem;
+  height: 100%;
+}
+#furniture-container ul li {
+  display: inline-block;
+  padding: 2px;
+}
+#furniture-container ul li:hover {
+  background-color: #ff0;
 }

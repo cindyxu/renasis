@@ -5,11 +5,6 @@ var GRID_TILE_HYP = 7;
 var GRID_OFFSET_X = 0;
 var WALL_HEIGHT_RAW = 44;
 
-var SELECT_THUMB_SPACING_SCALED = 4;
-var SELECT_THUMB_SIZE_SCALED = 48;
-var SELECT_ROWS = 2;
-var SELECT_COLS = 5;
-var SELECT_MARGIN_TOP_SCALED = 40;
 var DRAG_ITEM_HEIGHT = 14;
 
 var SCALE = 2;
@@ -17,21 +12,18 @@ var SCALE = 2;
 $(function() {
 	var canvas = document.getElementById("customize-room");
 	var ctx = canvas.getContext("2d");
-	var offset = $(canvas).parent().offset();
+	var offset = $(canvas).offset();
 
 	var furnitureContainer = $("#furniture-container");
 
-	var tileHeight = (GRID_TILE_HYP * 2 - 2);
-	var tileWidth = ((GRID_TILE_HYP * 2 - 2) * 2);
-
-	var selectWidthScaled = SELECT_COLS * (SELECT_THUMB_SPACING_SCALED*2 + SELECT_THUMB_SIZE_SCALED);
-	var selectHeightScaled = SELECT_ROWS * (SELECT_THUMB_SPACING_SCALED*2 + SELECT_THUMB_SIZE_SCALED);
+	var tileHeightRaw = (GRID_TILE_HYP * 2 - 2);
+	var tileWidthRaw = ((GRID_TILE_HYP * 2 - 2) * 2);
 
 	var gridOriginYRaw = (GRID_TILE_HYP-1) * GRID_ROWS + 1 + WALL_HEIGHT_RAW;
 	var gridOriginXRaw = GRID_OFFSET_X;
 
-	var gridWidthScaled = (2 + (GRID_ROWS + GRID_COLS) * tileWidth/2 + GRID_OFFSET_X) * SCALE;
-	var gridHeightScaled = ((GRID_ROWS + GRID_COLS) * tileHeight/2 + 2 + WALL_HEIGHT_RAW) * SCALE;
+	var gridWidthScaled = (2 + (GRID_ROWS + GRID_COLS) * tileWidthRaw/2 + GRID_OFFSET_X) * SCALE;
+	var gridHeightScaled = ((GRID_ROWS + GRID_COLS) * tileHeightRaw/2 + 2 + WALL_HEIGHT_RAW) * SCALE;
 
 	var canvasRoom = $('<canvas id="customize-room" width=' + gridWidthScaled + ' height=' + gridHeightScaled + '>')[0];
 	var ctxRoom = canvasRoom.getContext("2d");
@@ -40,13 +32,12 @@ $(function() {
 	var ctxBase = canvasBase.getContext("2d");
 
 	var canvasGrid = $('<canvas id="customize-room" width=' + gridWidthScaled + ' height=' + gridHeightScaled + '>')[0];
-	var ctxGrid = canvasGrid.getContext("2d");
-
-	var canvasSelect = $('<canvas id="furniture-selection" width=' + selectWidthScaled + ' height=' + selectHeightScaled + '>')[0];
-	var ctxSelect = canvasSelect.getContext("2d");
+	var ctxGrid = canvasGrid.getContext("2d");                                                 
 
 	var canvasSelectedTile = $('<canvas id="selected-tile" width=' + ((GRID_TILE_HYP*2-1)*2-2)*SCALE + ' height=' + (GRID_TILE_HYP*2-1)*SCALE + '>')[0];
 	var ctxSelectedTile = canvasSelectedTile.getContext("2d");
+
+	var imageSelectedWall = $("#wall-selected")[0];
 
 	// this is to scale b/c images are already to scale
 	var canvasColormap = $('<canvas id="customize-room" width=' + gridWidthScaled + ' height=' + gridHeightScaled + '>')[0];
@@ -57,26 +48,22 @@ $(function() {
 	var roomOffsetXScaled = canvas.width/2 - gridWidthScaled/2;
 	var roomOffsetYScaled = 0;
 
-	var selectOffsetXScaled = canvas.width/2 - selectWidthScaled/2;
-	var selectOffsetYScaled = roomOffsetYScaled + gridHeightScaled + SELECT_MARGIN_TOP_SCALED + furnitureContainer.outerHeight();
-
-	var selectFurniture = [];
-	
 	var gridFurniture = [];
 	var gridFurnitureTiles = [];
 	
-	var wallFurniture = [];
+	var wallFurnitureLeft = [];
+	var wallFurnitureRight = [];
+	var wallFurnitureUnique = [];
 
 	var hoverGridTile;
 	var hoverGridTilePosScaled;
 
-	var hoverSelectFurnitureIdx;
-
 	var dragFurniture;
+	var dragFurnitureImg;
 	var dragOffsetXScaled, dragOffsetYScaled;
 
 	var roomFloor;
-	var roomWall;
+	var roomWallpaper;
 
 	var mx, my;
 
@@ -92,16 +79,16 @@ $(function() {
 				// edges
 				for (i = j*2; i < j*2+2; i++) {
 					if (k === 0 || k === 2) px = tx-SCALE + i * SCALE;
-					else px = tx-SCALE + (tileWidth+1 - i) * SCALE;
+					else px = tx-SCALE + (tileWidthRaw+1 - i) * SCALE;
 
 					if (!sl) drawScaledPixel(px, py, pdata, w, h, SCALE, 0, 0, 0, 255);
 				}
 
 				// fill
 				if (sl) {
-					for (i = j*2+2; i < tileWidth/2 + 1; i++) {
+					for (i = j*2+2; i < tileWidthRaw/2 + 1; i++) {
 						if (k === 0 || k === 2) px = tx-SCALE + i * SCALE;
-						else px = tx-SCALE + (tileWidth+1 - i) * SCALE;
+						else px = tx-SCALE + (tileWidthRaw+1 - i) * SCALE;
 
 						drawScaledPixel(px, py, pdata, w, h, SCALE, 255, 255, 0, 255);
 					}
@@ -126,32 +113,78 @@ $(function() {
 	var posScaledToGridTile = function(px, py) {
 		var dx = ((px/SCALE) - gridOriginXRaw);
 		var dy = (gridOriginYRaw - (py/SCALE));
-		var r = Math.floor(dx / tileWidth + dy / tileHeight);
-		var c = Math.floor(dx / tileWidth - dy / tileHeight);
+		var r = Math.floor(dx / tileWidthRaw + dy / tileHeightRaw);
+		var c = Math.floor(dx / tileWidthRaw - dy / tileHeightRaw);
 		return [r, c];
 	};
 
+	var furniturePosScaledToWallTile = function(furniture, px, py) {
+		var dxs = px - gridOriginXRaw * SCALE;
+		var dys = py - gridOriginYRaw * SCALE;
+
+		if (dxs < GRID_ROWS * tileWidthRaw * SCALE / 2) {
+			return [-1, Math.floor(dxs / (tileWidthRaw * SCALE / 2))];
+		} else {
+			return [1, Math.floor((gridWidthScaled - (dxs + $(furniture.images[0]).width())) / (tileWidthRaw * SCALE / 2))];
+		}
+	};
+
 	var gridTileToPosScaled = function(r, c) {
-		return [(gridOriginXRaw + tileWidth/2 * (r + c) + 1) * SCALE,
+		return [(gridOriginXRaw + tileWidthRaw/2 * (r + c) + 1) * SCALE,
 		((gridOriginYRaw - (GRID_TILE_HYP-1) * (r - c)) - GRID_TILE_HYP) * SCALE];
+	};
+
+	var wallTileToPosScaled = function(wallSide, wallCol, hilo) {
+		var px, py;
+		if (wallSide < 0) px = (gridOriginXRaw + tileWidthRaw/2 * wallCol) * SCALE;
+		else px = (gridOriginXRaw - tileWidthRaw/2 * wallCol) * SCALE + gridWidthScaled;
+		py = (gridOriginYRaw - tileHeightRaw/2 * (wallCol + (hilo ? 1 : 0)) - WALL_HEIGHT_RAW) * SCALE;
+		return [px, py];
+	};
+
+	var wallFurnitureToPosScaled = function(furniture, wallSide, wallCol) {
+		if (wallSide === undefined) wallSide = furniture.wallSide;
+		if (wallCol === undefined) wallCol = furniture.wallCol;
+		if (wallSide < 0) {
+			return [(gridOriginXRaw + tileWidthRaw/2 * wallCol + 1 + furniture.baseOffsetX) * SCALE,
+			(gridOriginYRaw - tileHeightRaw/2 * wallCol - WALL_HEIGHT_RAW + furniture.baseOffsetY) * SCALE];
+		} else {
+			return [(gridOriginXRaw - tileWidthRaw/2 * wallCol - furniture.baseOffsetX) * SCALE + gridWidthScaled,
+			(gridOriginYRaw - tileHeightRaw/2 * wallCol - WALL_HEIGHT_RAW + furniture.baseOffsetY) * SCALE];
+		}
 	};
 
 	var gridTileInRange = function(r, c) {
 		return r >= 0 && c >= 0 && r < GRID_ROWS && c < GRID_COLS;
 	};
 
-	var isValidFurniturePosition = function(furniture, r, c) {
-		if (furniture.baseTiles) {
-			for (var i = 0; i < furniture.baseRows; i++) {
-				for (var j = 0; j < furniture.baseCols; j++) {
-					var underTileIdx = i * furniture.baseCols + j;
-					if (furniture.baseTiles[underTileIdx] && !gridTileInRange(r + i, c + j)) {
-						return false;
-					}
-					if (gridFurnitureTiles[(r+i) * GRID_COLS + (c+j)]) {
-						return false;
-					}
+	var isValidFloorPosition = function(furniture, r, c) {
+		for (var i = 0; i < furniture.baseRows; i++) {
+			for (var j = 0; j < furniture.baseCols; j++) {
+				var underTileIdx = i * furniture.baseCols + j;
+				if (furniture.baseTiles[underTileIdx] && !gridTileInRange(r + i, c + j)) {
+					return false;
 				}
+				if (gridFurnitureTiles[(r+i) * GRID_COLS + (c+j)]) {
+					return false;
+				}
+			}
+		}
+		return true;
+	};
+
+	var isValidWallPosition = function(furniture, s, w) {
+		var i;
+		if (s < 0) {
+			for (i = w; i < w + furniture.gridCols; i++) {
+				if (i < 0 || i >= GRID_ROWS) return false;
+				if (wallFurnitureLeft[i]) return false;
+			}
+			
+		} else {
+			for (i = w; i < w + furniture.gridCols; i++) {
+				if (i < 0 || i >= GRID_COLS) return false;
+				if (wallFurnitureRight[i]) return false;
 			}
 		}
 		return true;
@@ -163,29 +196,16 @@ $(function() {
 		ctx.drawImage(canvasGrid, roomOffsetXScaled, roomOffsetYScaled);
 		if (dragFurniture) drawDragFurnitureHighlight();
 		else if (hoverGridTile && gridTileInRange(hoverGridTile[0], hoverGridTile[1])) {
-			ctx.drawImage(canvasSelectedTile, roomOffsetXScaled + hoverGridTilePosScaled[0], roomOffsetYScaled + hoverGridTilePosScaled[1]);
+			ctx.drawImage(canvasSelectedTile, 
+				roomOffsetXScaled + hoverGridTilePosScaled[0], 
+				roomOffsetYScaled + hoverGridTilePosScaled[1]);
+		}
+		for (var w = 0; w < wallFurnitureUnique.length; w++) {
+			drawFurnitureOnWall(wallFurnitureUnique[w]);
 		}
 		for (var i = 0; i < gridFurniture.length; i++) {
-			drawFurnitureInRoom(gridFurniture[i]);
+			drawFurnitureOnFloor(gridFurniture[i]);
 		}
-		ctx.drawImage(canvasSelect, selectOffsetXScaled, selectOffsetYScaled);
-		drawDragFurniture();
-	};
-
-	var drawHighlightRectInSelection = function(r, c) {
-		ctxSelect.save();
-		ctxSelect.fillStyle = "yellow";
-		ctxSelect.fillRect(c * (SELECT_THUMB_SIZE_SCALED + SELECT_THUMB_SPACING_SCALED * 2),
-			r * (SELECT_THUMB_SIZE_SCALED + SELECT_THUMB_SPACING_SCALED * 2), 
-			SELECT_THUMB_SIZE_SCALED + SELECT_THUMB_SPACING_SCALED * 2,
-			SELECT_THUMB_SIZE_SCALED + SELECT_THUMB_SPACING_SCALED * 2);
-		ctxSelect.restore();
-	};
-
-	var drawFurnitureInSelection = function(i) {
-		ctxSelect.drawImage(selectFurniture[i].thumb, 
-			(SELECT_THUMB_SIZE_SCALED + SELECT_THUMB_SPACING_SCALED*2) * (i % SELECT_COLS) + SELECT_THUMB_SPACING_SCALED, 
-			(SELECT_THUMB_SIZE_SCALED + SELECT_THUMB_SPACING_SCALED*2) * Math.floor(i / SELECT_COLS) + SELECT_THUMB_SPACING_SCALED);
 	};
 
 	var mousemoveRoom = function(e, px, py) {
@@ -194,23 +214,40 @@ $(function() {
 		drawAll();
 	};
 
-	var mousemoveSelect = function(e, px, py) {
-		var nhidx = posToSelectFurnitureIdx(px, py);
-		var redraw = (nhidx !== hoverSelectFurnitureIdx);
-		hoverSelectFurnitureIdx = nhidx;
-
-		if (redraw) {
-			drawSelect();
-		}
-	};
-
 	var mousedownRoom = function(e, px, py) {
 		var colorOrig = Math.floor(py * canvasColormap.width + px) * 4;
 		var idx = pdataColormap[colorOrig]*65025 + pdataColormap[colorOrig+1]*255 + pdataColormap[colorOrig+2];
 		if (idx >= 0 && idx < gridFurniture.length) {
-			dragFurniture = removeFurnitureFromRoom(idx);
+			setDragFurniture(removeFurnitureFromRoom(idx));
 			drawColormap();
 		}
+	};
+
+	var setDragFurniture = function(df) {
+		dragFurniture = df;
+		dragFurnitureImg = (dragFurniture.subcategory !== "wallpaper" && dragFurniture.subcategory !== "floor" ? 
+			$(dragFurniture.images[0]).clone() : $(dragFurniture.thumb).clone());
+		dragFurnitureImg.css("position", "fixed");
+		
+		$("body").append(dragFurnitureImg);
+
+		dragOffsetXScaled = dragFurnitureImg.width() / 2;
+		dragOffsetYScaled = dragFurnitureImg.height() / 2;
+
+		$("body").mouseup(function(e) {
+			mx = e.pageX;
+			my = e.pageY;
+			if (mx - offset.left >= roomOffsetXScaled && mx - offset.left < roomOffsetXScaled + gridWidthScaled &&
+				my - offset.top >= roomOffsetYScaled && my - offset.top < roomOffsetYScaled + gridHeightScaled) {
+				dropFurnitureInRoom();
+			}
+			dragFurniture = undefined;
+			dragFurnitureImg.remove();
+			dragFurnitureImg = undefined;
+			drawAll();
+			
+			$("body").off("mouseup");
+		});
 	};
 
 	var removeFurnitureFromRoom = function(idx) {
@@ -225,26 +262,40 @@ $(function() {
 		return removeFurniture;
 	};
 
-	var mousedownSelect = function(e, px, py) {
-		if (hoverSelectFurnitureIdx >= 0) {
-			dragFurniture = selectFurniture[hoverSelectFurnitureIdx];
-			var image = (dragFurniture.baseTiles ? dragFurniture.images[0] : dragFurniture.thumb);
-			dragOffsetXScaled = Math.floor(image.width/2);
-			dragOffsetYScaled = Math.floor(image.height/2);
-		}
-	};
-
 	var drawDragFurnitureHighlight = function() {
 		ctx.save();
-		if (!dragFurniture || !dragFurniture.baseTiles) return;
-		var underTileOrig = posScaledToGridTile(Math.floor(mx - roomOffsetXScaled - dragOffsetXScaled + (dragFurniture.baseOffsetX + tileWidth/2) * SCALE), 
-			Math.floor(my - roomOffsetYScaled - dragOffsetYScaled + (dragFurniture.baseOffsetY + tileHeight/2) * SCALE));
-		for (var j = 0; j < dragFurniture.baseRows; j++) {
-			for (var i = 0; i < dragFurniture.baseCols; i++) {
-				var underTileIdx = j * dragFurniture.baseCols + i;
-				if (dragFurniture.baseTiles[underTileIdx]) {
-					var tpos = gridTileToPosScaled(underTileOrig[0] + i, underTileOrig[1] + j);
-					ctx.drawImage(canvasSelectedTile, tpos[0] + roomOffsetXScaled, tpos[1] + roomOffsetYScaled);
+		if (!dragFurniture) return;
+		var underTileOrig, i, j, underTileIdx, tpos;
+		if (!dragFurniture.baseTiles) {
+			if (dragFurniture.subcategory === "wall") {
+				underTileOrig = furniturePosScaledToWallTile(dragFurniture, Math.floor(mx - offset.left - roomOffsetXScaled - dragOffsetXScaled + dragFurniture.baseOffsetX * SCALE), 
+					Math.floor(my - offset.top - roomOffsetYScaled - dragOffsetYScaled + dragFurniture.baseOffsetY * SCALE));
+				if (underTileOrig[0] === -1) {
+					for (i = 0; i < dragFurniture.baseCols; i++) {
+						tpos = wallTileToPosScaled(underTileOrig[0], underTileOrig[1] + i, true);
+						ctx.drawImage(imageSelectedWall, tpos[0] + roomOffsetXScaled, tpos[1] + roomOffsetYScaled);
+					}
+				} else {
+					ctx.save();
+					ctx.scale(-1, 1);
+					ctx.translate(-canvas.width, 0);
+					for (i = 0; i < dragFurniture.baseCols; i++) {
+						tpos = wallTileToPosScaled(underTileOrig[0], underTileOrig[1] + i, true);
+						ctx.drawImage(imageSelectedWall, canvas.width - (tpos[0] + roomOffsetXScaled), tpos[1] + roomOffsetYScaled);
+					}
+					ctx.restore();
+				}
+			}
+		} else {
+			 underTileOrig = posScaledToGridTile(Math.floor(mx - offset.left - roomOffsetXScaled - dragOffsetXScaled + (dragFurniture.baseOffsetX + tileWidthRaw/2) * SCALE), 
+				Math.floor(my - offset.top - roomOffsetYScaled - dragOffsetYScaled + (dragFurniture.baseOffsetY + tileHeightRaw/2) * SCALE));
+			for (j = 0; j < dragFurniture.baseRows; j++) {
+				for (i = 0; i < dragFurniture.baseCols; i++) {
+					underTileIdx = j * dragFurniture.baseCols + i;
+					if (dragFurniture.baseTiles[underTileIdx]) {
+						tpos = gridTileToPosScaled(underTileOrig[0] + i, underTileOrig[1] + j);
+						ctx.drawImage(canvasSelectedTile, tpos[0] + roomOffsetXScaled, tpos[1] + roomOffsetYScaled);
+					}
 				}
 			}
 		}
@@ -284,26 +335,51 @@ $(function() {
 		if (dragFurniture.subcategory === "floor") {
 			roomFloor = dragFurniture;
 			initFloor();
-		} else if (dragFurniture.subcategory === "wall") {
-			roomWall = dragFurniture;
-			initWall();
+		} else if (dragFurniture.subcategory === "wallpaper") {
+			roomWallpaper = dragFurniture;
+			initWallpaper();
 		} else {
-			var underTileOrig = posScaledToGridTile(Math.floor(mx - roomOffsetXScaled - dragOffsetXScaled + (dragFurniture.baseOffsetX + tileWidth/2) * SCALE), 
-			Math.floor(my - roomOffsetYScaled - dragOffsetYScaled + (dragFurniture.baseOffsetY + tileHeight/2) * SCALE));
-			if (!isValidFurniturePosition(dragFurniture, underTileOrig[0], underTileOrig[1])) return;
-			var addRoomFurniture = $.extend({}, dragFurniture);
-			addRoomFurniture.gridRow = underTileOrig[0];
-			addRoomFurniture.gridCol = underTileOrig[1];
+			var fx = Math.floor(mx - offset.left - roomOffsetXScaled - dragOffsetXScaled + dragFurniture.baseOffsetX * SCALE);
+			var fy = Math.floor(my - offset.top - roomOffsetYScaled - dragOffsetYScaled + dragFurniture.baseOffsetY * SCALE);
+			
+			if (dragFurniture.subcategory === "wall") {
+				var wallTileOrig = furniturePosScaledToWallTile(dragFurniture, fx, fy);
+				console.log(wallTileOrig);
+				if (!isValidWallPosition(dragFurniture, wallTileOrig[0], wallTileOrig[1])) return;
 
-			for (var i = 0; i < addRoomFurniture.baseRows; i++) {
-				for (var j = 0; j < addRoomFurniture.baseCols; j++) {
-					var r = addRoomFurniture.gridRow+i;
-					var c = addRoomFurniture.gridCol+j;
-					gridFurnitureTiles[r * GRID_COLS + c] = addRoomFurniture;
+				dragFurniture.wallSide = wallTileOrig[0];
+				dragFurniture.wallCol = wallTileOrig[1];
+
+				var w;
+				if (dragFurniture.wallSide < 0) {
+					for (w = 0; w < dragFurniture.baseCols; w++) {
+						wallFurnitureLeft[w + dragFurniture.wallCol] = dragFurniture;
+					}
+				} else {
+					for (w = 0; w < dragFurniture.baseCols; w++) {
+						wallFurnitureRight[w + dragFurniture.wallCol] = dragFurniture;
+					}
 				}
-			}
+				wallFurnitureUnique.push(dragFurniture);
+			} else {
 
-			resolveFurnitureOrdering();
+				fx += tileWidthRaw/2 * SCALE;
+				fy += tileHeightRaw/2 * SCALE;
+
+				var underTileOrig = posScaledToGridTile(fx, fy);
+				if (!isValidFloorPosition(dragFurniture, underTileOrig[0], underTileOrig[1])) return;
+				dragFurniture.gridRow = underTileOrig[0];
+				dragFurniture.gridCol = underTileOrig[1];
+
+				for (var i = 0; i < dragFurniture.baseRows; i++) {
+					for (var j = 0; j < dragFurniture.baseCols; j++) {
+						var r = dragFurniture.gridRow+i;
+						var c = dragFurniture.gridCol+j;
+						gridFurnitureTiles[r * GRID_COLS + c] = dragFurniture;
+					}
+				}
+				resolveFurnitureOrdering();
+			}
 			drawColormap();
 		}
 	};
@@ -313,48 +389,39 @@ $(function() {
 		ctxColormap.save();
 		ctxColormap.fillStyle = "white";
 		ctxColormap.fillRect(0, 0, canvasColormap.width, canvasColormap.height);
-		for (var i = 0; i < gridFurniture.length; i++) {
-			var ri = gridFurniture[i];
-			var tpos = gridTileToPosScaled(ri.gridRow, ri.gridCol);
-			var px = tpos[0] - ri.baseOffsetX * SCALE;
-			var py = tpos[1] - ri.baseOffsetY * SCALE;
+
+		var drawColormapForItem = function(item, tpos) {
+			var px = tpos[0] - item.baseOffsetX * SCALE;
+			var py = tpos[1] - item.baseOffsetY * SCALE;
 			ctxColormap.globalCompositeOperation = "xor";
-			ctxColormap.drawImage(ri.images[0], px, py);
+			ctxColormap.drawImage(item.images[0], px, py);
 			ctxColormap.globalCompositeOperation = "destination-over";
 			ctxColormap.fillStyle = "rgba(" + Math.floor(i/65025) + "," + Math.floor((i/(255)) % 255) + "," + (i % 255) + ", 255)";
-			ctxColormap.fillRect(px, py, ri.images[0].width, ri.images[0].height);
+			ctxColormap.fillRect(px, py, item.images[0].width, item.images[0].height);
+		};
+
+		var i, item, tpos;
+		for (i = 0; i < wallFurnitureUnique.length; i++) {
+			item = wallFurnitureUnique[i];
+			if (!item) continue;
+			tpos = wallFurnitureToPosScaled(item);
+			drawColormapForItem(item, tpos);
 		}
+
+		for (i = 0; i < gridFurniture.length; i++) {
+			item = gridFurniture[i];
+			tpos = gridTileToPosScaled(item.gridRow, item.gridCol);
+			drawColormapForItem(item, tpos);
+		}
+
 		ctxColormap.restore();
 		pdataColormap = ctxColormap.getImageData(0, 0, canvasColormap.width, canvasColormap.height).data;
-	};
-
-	var drawDragFurniture = function() {
-		if (!dragFurniture) return;
-		if (dragFurniture.baseTiles) {
-			ctx.drawImage(dragFurniture.images[0], 
-					Math.floor(mx - dragOffsetXScaled), 
-					Math.floor(my - DRAG_ITEM_HEIGHT*SCALE - dragOffsetYScaled));
-		} else {
-			ctx.drawImage(dragFurniture.thumb, 
-					Math.floor(mx - dragOffsetXScaled), 
-					Math.floor(my - dragOffsetYScaled));
-		}
 	};
 
 	var mouseupRoom = function(e, px, py) {
 	};
 
 	var mouseupSelect = function(e, px, py) {
-	};
-
-	var inSelectCanvas = function(px, py) {
-		return px >= selectOffsetXScaled && px < selectOffsetXScaled + selectWidthScaled &&
-			py >= selectOffsetYScaled && py < selectOffsetYScaled + selectHeightScaled;
-	};
-
-	var inRoomCanvas = function(px, py) {
-		return px >= roomOffsetXScaled && px < roomOffsetXScaled + gridWidthScaled &&
-			py >= roomOffsetYScaled && py < roomOffsetYScaled + gridHeightScaled;
 	};
 
 	var initGrid = function() {
@@ -371,7 +438,7 @@ $(function() {
 
 	var initBase = function() {
 		ctxBase.clearRect(0, 0, gridWidthScaled, gridHeightScaled);
-		initWall();
+		initWallpaper();
 		initFloor();
 	};
 
@@ -392,54 +459,32 @@ $(function() {
 		}
 	};
 
-	var initWall = function() {
-		if (!roomWall) return;
+	var initWallpaper = function() {
+		if (!roomWallpaper) return;
 		ctxBase.save();
 
 		var c, r, wr, wimg, gps, gx, gy;
 		for (r = GRID_ROWS-1; r >= 0; r--) {
-			wr = roomWall.baseCols - 1 - ((GRID_ROWS - 1 - r) % roomWall.baseCols);
-			wimg = roomWall.images[wr];
+			wr = roomWallpaper.baseCols - 1 - ((GRID_ROWS - 1 - r) % roomWallpaper.baseCols);
+			wimg = roomWallpaper.images[wr];
 			gps = gridTileToPosScaled(r, 0);
 			gx = gps[0];
 			gy = gps[1] - (WALL_HEIGHT_RAW - 1) * SCALE;
 			ctxBase.drawImage(wimg,
-				(gx - roomWall.baseOffsetX),
-				(gy - roomWall.baseOffsetY));
+				(gx - roomWallpaper.baseOffsetX),
+				(gy - roomWallpaper.baseOffsetY));
 		}
 		for (c = 0; c < GRID_COLS; c++) {
-			wc = c % roomWall.baseCols;
-			wimg = roomWall.images[wc + roomWall.baseCols];
+			wc = c % roomWallpaper.baseCols;
+			wimg = roomWallpaper.images[wc + roomWallpaper.baseCols];
 			gps = gridTileToPosScaled(GRID_ROWS-1, c);
-			gx = gps[0] + (tileWidth/2) * SCALE;
+			gx = gps[0] + (tileWidthRaw/2) * SCALE;
 			gy = gps[1] - (WALL_HEIGHT_RAW - 1) * SCALE;
 			ctxBase.drawImage(wimg,
-				(gx - roomWall.baseOffsetX),
-				(gy - roomWall.baseOffsetY));
+				(gx - roomWallpaper.baseOffsetX),
+				(gy - roomWallpaper.baseOffsetY));
 		}
 		ctxBase.restore();
-	};
-
-	var posToSelectFurnitureIdx = function(px, py) {
-		var r = Math.floor(py / (SELECT_THUMB_SIZE_SCALED+SELECT_THUMB_SPACING_SCALED*2));
-		var c = Math.floor(px / (SELECT_THUMB_SIZE_SCALED+SELECT_THUMB_SPACING_SCALED*2));
-		if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS || (r*GRID_COLS+c) >= selectFurniture.length) return -1;
-		return r*SELECT_COLS+c;
-	};
-
-	var drawSelect = function() {
-		ctxSelect.save();
-		ctxSelect.fillStyle = "white";
-		ctxSelect.fillRect(0, 0, canvasSelect.width, canvasSelect.height);
-		if (hoverSelectFurnitureIdx >= 0) {
-			drawHighlightRectInSelection(
-				Math.floor(hoverSelectFurnitureIdx / SELECT_COLS), 
-				Math.floor(hoverSelectFurnitureIdx % SELECT_COLS));
-		}
-		for (var i = 0; i < selectFurniture.length; i++) {
-			drawFurnitureInSelection(i);	
-		}
-		ctxSelect.restore();
 	};
 
 	var initSelectedTile = function() {
@@ -449,9 +494,20 @@ $(function() {
 		ctxSelectedTile.putImageData(imageData, 0, 0);
 	};
 
-	var drawFurnitureInRoom = function(furniture) {
+	var drawFurnitureOnWall = function(furniture) {
+		var fp = wallFurnitureToPosScaled(furniture);
+		if (furniture.wallSide < 0) ctx.drawImage(furniture.images[0], fp[0] + roomOffsetXScaled, fp[1] + roomOffsetYScaled);
+		else ctx.drawImage(furniture.images[0], fp[0] + roomOffsetXScaled - $(furniture.images[0]).width(), fp[1] + roomOffsetYScaled);
+	};
+
+	var drawFurnitureOnFloor = function(furniture) {
 		var fp = gridTileToPosScaled(furniture.gridRow, furniture.gridCol);
 		ctx.drawImage(furniture.images[0], fp[0] - furniture.baseOffsetX*SCALE + roomOffsetXScaled, fp[1] - furniture.baseOffsetY*SCALE + roomOffsetYScaled);
+	};
+
+	var moveDragFurniture = function(e) {
+		dragFurnitureImg.css("left", (e.pageX - dragOffsetXScaled) + "px");
+		dragFurnitureImg.css("top", (e.pageY - dragOffsetYScaled - DRAG_ITEM_HEIGHT) + "px");
 	};
 
 	var gatherFurnitureSelection = function() {
@@ -474,55 +530,57 @@ $(function() {
 						function(n, i) { return parseInt(n); }) 
 					: undefined)
 			};
-			selectFurniture.push(fobj);
+			//selectFurniture.push(fobj);
 		});
 	};
 
-	$(canvas).mousemove(function(e) {
-		var offset = $(this).offset();
-		mx = e.pageX - offset.left;
-		my = e.pageY - offset.top;
+	$("canvas").mousedown(function(e) {
+		mx = e.pageX;
+		my = e.pageY;
+		if (mx - offset.left >= roomOffsetXScaled && mx - offset.left < roomOffsetXScaled + gridWidthScaled &&
+			my - offset.top >= roomOffsetYScaled && my - offset.top < roomOffsetYScaled + gridHeightScaled) {
+			mousedownRoom(e, mx - roomOffsetXScaled - offset.left, my - roomOffsetYScaled - offset.top);
+		}
+	});
 
-		if (inSelectCanvas(mx, my)) mousemoveSelect(e, mx - selectOffsetXScaled, my - selectOffsetYScaled);
-		else if (inRoomCanvas(mx, my)) mousemoveRoom(e, mx - roomOffsetXScaled, my - roomOffsetYScaled);
-
+	$("body").mousemove(function(e) {
+		mx = e.pageX;
+		my = e.pageY;
+		if (dragFurniture) moveDragFurniture(e);
+		if (mx - offset.left >= roomOffsetXScaled && mx - offset.left < roomOffsetXScaled + gridWidthScaled &&
+			my - offset.top >= roomOffsetYScaled && my - offset.top < roomOffsetYScaled + gridHeightScaled) {
+			mousemoveRoom(e, mx - roomOffsetXScaled - offset.left, my - roomOffsetYScaled - offset.top);
+		}
 		drawAll();
 	});
 
-	$(canvas).mousedown(function(e) {
-		var offset = $(this).offset();
-		mx = e.pageX - offset.left;
-		my = e.pageY - offset.top;
-
-		if (inSelectCanvas(mx, my)) mousedownSelect(e, mx - selectOffsetXScaled, my - selectOffsetYScaled);
-		else if (inRoomCanvas(mx, my)) mousedownRoom(e, mx - roomOffsetXScaled, my - roomOffsetYScaled);
-
-		drawAll();
+	$(".furniture-thumb").mousedown(function(e) {
+		e.preventDefault();
+		var $fel = $(this).parent();
+		var furniture = {
+			"thumb" : this,
+			"images" : $fel.find(".furniture-image").toArray(),
+			"itemId" : $fel.attr("data-item-id"),
+			"itemName" : $fel.attr("data-item-name"),
+			"itemAlias" : $fel.attr("data-item-alias"),
+			"subcategory" : $fel.attr("data-item-subcategory"),
+			"baseOffsetX" : parseInt($fel.attr("data-base-offset-x")),
+			"baseOffsetY" : parseInt($fel.attr("data-base-offset-y")),
+			"baseRows" : parseInt($fel.attr("data-base-rows")),
+			"baseCols" : parseInt($fel.attr("data-base-cols")),
+			"baseTiles" : ($fel.attr("data-base-tiles-bits") ? 
+				$.map(parseInt($fel.attr("data-base-tiles-bits")).toString(2).split(""), 
+					function(n, i) { return parseInt(n); }) 
+				: undefined)
+		};
+		setDragFurniture(furniture);
+		moveDragFurniture(e);
 	});
-
-	$(canvas).mouseup(function(e) {
-		var offset = $(this).offset();
-		mx = e.pageX - offset.left;
-		my = e.pageY - offset.top;
-
-		if (dragFurniture) dropFurnitureInRoom();
-		else if (inSelectCanvas(mx, my)) mouseupSelect(e, mx - selectOffsetXScaled, my - selectOffsetYScaled);
-		else if (inRoomCanvas(mx, my)) mouseupRoom(e, mx - roomOffsetXScaled, my - roomOffsetYScaled);
-		dragFurniture = undefined;
-
-		drawAll();
-	});
-
-	furnitureContainer.css("bottom", 600 - (selectOffsetYScaled + selectHeightScaled) - parseInt(furnitureContainer.css("padding-bottom")) + "px");
-	furnitureContainer.css("left", (selectOffsetXScaled - parseInt(furnitureContainer.css("padding-left"))) + "px");
-	furnitureContainer.css("width", selectWidthScaled + "px");
-	furnitureContainer.css("height", furnitureContainer.height() + selectHeightScaled + "px");
 
 	initBase();
 	initGrid();
 	initSelectedTile();
 	gatherFurnitureSelection();
-	drawSelect();
 	drawColormap();
 
 	drawAll();
