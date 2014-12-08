@@ -8,7 +8,6 @@ block inner-content
 	#inner-content
 		#room-ui
 			img#wall-selected(src = "/images/ui/wall_selected.png")
-		canvas#customize-room( width=800, height=350 )
 		#furniture-container
 			p= "decorate!"
 			ul
@@ -23,22 +22,24 @@ block inner-content
 					data-base-tiles-bits=15)
 					img.furniture-thumb(src="/images/items/thumbs/furniture/bed.png")
 					.furniture-images
-						img.furniture-image(src="/images/items/furniture/bed/bed.png")
+						img.furniture-inner(src="/images/items/furniture/bed/cute_bed/inner.png")
+						img.furniture-outline(src="/images/items/furniture/bed/cute_bed/outline.png")
+						img.furniture-shadow(src="/images/items/furniture/bed/cute_bed/shadow.png")
 
 				li(data-item-id=2,
 					data-item-alias="Birch floor",
 					data-item-name="birch_floor",
 					data-item-subcategory="floor",
-					data-base-offset-x=-2, 
+					data-base-offset-x=0, 
 					data-base-offset-y=0,
 					data-base-rows=2,
 					data-base-cols=2)
 					img.furniture-thumb(src="/images/items/thumbs/furniture/birch.png")
 					.furniture-images
-						img.furniture-image(src="/images/items/furniture/floor/birch1.png")
-						img.furniture-image(src="/images/items/furniture/floor/birch2.png")
-						img.furniture-image(src="/images/items/furniture/floor/birch3.png")
-						img.furniture-image(src="/images/items/furniture/floor/birch4.png")
+						img.furniture-tile(src="/images/items/furniture/floor/birch1.png")
+						img.furniture-tile(src="/images/items/furniture/floor/birch2.png")
+						img.furniture-tile(src="/images/items/furniture/floor/birch3.png")
+						img.furniture-tile(src="/images/items/furniture/floor/birch4.png")
 
 				li(data-item-id=3,
 					data-item-alias="Sky wall",
@@ -49,14 +50,14 @@ block inner-content
 					data-base-cols=4)
 					img.furniture-thumb(src="/images/items/thumbs/furniture/skywall.png")
 					.furniture-images
-						img.furniture-image(src="/images/items/furniture/wallpaper/sky1.png")
-						img.furniture-image(src="/images/items/furniture/wallpaper/sky2.png")
-						img.furniture-image(src="/images/items/furniture/wallpaper/sky3.png")
-						img.furniture-image(src="/images/items/furniture/wallpaper/sky4.png")
-						img.furniture-image(src="/images/items/furniture/wallpaper/sky5.png")
-						img.furniture-image(src="/images/items/furniture/wallpaper/sky6.png")
-						img.furniture-image(src="/images/items/furniture/wallpaper/sky7.png")
-						img.furniture-image(src="/images/items/furniture/wallpaper/sky8.png")
+						img.furniture-tile(src="/images/items/furniture/wallpaper/sky1.png")
+						img.furniture-tile(src="/images/items/furniture/wallpaper/sky2.png")
+						img.furniture-tile(src="/images/items/furniture/wallpaper/sky3.png")
+						img.furniture-tile(src="/images/items/furniture/wallpaper/sky4.png")
+						img.furniture-tile(src="/images/items/furniture/wallpaper/sky5.png")
+						img.furniture-tile(src="/images/items/furniture/wallpaper/sky6.png")
+						img.furniture-tile(src="/images/items/furniture/wallpaper/sky7.png")
+						img.furniture-tile(src="/images/items/furniture/wallpaper/sky8.png")
 
 				li(data-item-id=4,
 					data-item-alias="Window",
@@ -67,4 +68,55 @@ block inner-content
 					data-base-cols=2)
 					img.furniture-thumb(src="/images/items/thumbs/furniture/window.png")
 					.furniture-images
-						img.furniture-image(src="/images/items/furniture/wall/window.png")
+						img.furniture-inner(src="/images/items/furniture/wall/window/inner.png")
+						img.furniture-outline(src="/images/items/furniture/wall/window/outline.png")
+
+				li(data-item-id=5,
+					data-item-alias="End table",
+					data-item-name="end_table",
+					data-item-subcategory="table",
+					data-base-offset-x=-2, 
+					data-base-offset-y=12,
+					data-base-rows=1,
+					data-base-cols=1,
+					data-surface-height=13,
+					data-base-tiles-bits=1,
+					data-surface-tiles-bits=1)
+					img.furniture-thumb(src="/images/items/thumbs/furniture/end_table.png")
+					.furniture-images
+						img.furniture-inner(src="/images/items/furniture/table/end_table/inner.png")
+						img.furniture-outline(src="/images/items/furniture/table/end_table/outline.png")
+						img.furniture-shadow(src="/images/items/furniture/table/end_table/shadow.png")
+
+				li(data-item-id=6,
+					data-item-alias="Neko",
+					data-item-name="neko",
+					data-item-subcategory="decor",
+					data-base-offset-x=-2, 
+					data-base-offset-y=12,
+					data-occupies-surface="true",
+					data-base-rows=1,
+					data-base-cols=1,
+					data-base-tiles-bits=1)
+					img.furniture-thumb(src="/images/items/thumbs/furniture/neko.png")
+					.furniture-images
+						img.furniture-inner(src="/images/items/furniture/decor/neko/inner.png")
+						img.furniture-outline(src="/images/items/furniture/decor/neko/outline.png")
+						img.furniture-shadow(src="/images/items/furniture/decor/neko/shadow.png")
+
+				li(data-item-id=6,
+					data-item-alias="Checkerboard table",
+					data-item-name="checkerboard_table",
+					data-item-subcategory="table",
+					data-base-offset-x=-1, 
+					data-base-offset-y=14,
+					data-base-rows=2,
+					data-base-cols=2,
+					data-surface-height=9,
+					data-base-tiles-bits=15,
+					data-surface-tiles-bits=15)
+					img.furniture-thumb(src="/images/items/thumbs/furniture/checkerboard_table.png")
+					.furniture-images
+						img.furniture-inner(src="/images/items/furniture/table/checkerboard_table/inner.png")
+						img.furniture-outline(src="/images/items/furniture/table/checkerboard_table/outline.png")
+						img.furniture-shadow(src="/images/items/furniture/table/checkerboard_table/shadow.png")
