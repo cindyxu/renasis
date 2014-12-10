@@ -48,9 +48,9 @@ $(function() {
 	// this is to scale b/c images are already to scale
 	var canvasColormap = $('<canvas id="colormap" width=' + gridWidthScaled + ' height=' + gridHeightScaled + '>')[0];
 	var ctxColormap = canvasColormap.getContext("2d");
-	$(canvasColormap).css("margin-top", "10px");
-	$(canvasColormap).css("margin-top", "10px");
-	$("#inner-content").append($(canvasColormap));
+	// $(canvasColormap).css("margin-top", "10px");
+	// $(canvasColormap).css("margin-top", "10px");
+	// $("#inner-content").append($(canvasColormap));
 
 	var pdataColormap;
 
@@ -241,6 +241,8 @@ $(function() {
 			"surfaceFurniture" : (fel.attr("data-surface-tiles-bits") ? 
 				[] : undefined),
 		};
+
+		console.log(fobj.itemId);
 
 		fobj.imageWidth = $(fobj.images.inner[0]).width();
 		fobj.imageHeight = $(fobj.images.inner[0]).height();
@@ -472,114 +474,162 @@ $(function() {
 		return [furniture, fr, fc];
 	};
 
+	var resolveFurnitureOrdering = function(rows, cols, tiles, addToOrdering) {
+		ordering = [];
+		var idDict = {};
+		var outgoingEdges = {};
+		var incomingEdges = {};
+		var isRoot = {};
+
+		var bucketTile = function(r, c, bucket, ranking, lastSeen) {
+			var furniture = tiles[r * cols + c];
+			if (furniture && furniture !== lastSeen) {
+				bucket.push(furniture);
+				ranking.push(c - r);
+				isRoot[furniture.itemId] = true;
+				idDict[furniture.itemId] = furniture;
+			}
+
+			return furniture;
+		};
+
+		var buckets = [];
+		var rankings = [];
+		var di, bucket;
+
+		for (di = 0; di < rows + cols; di++) {
+			bucket = [];
+			var ranking = [];
+			var lastSeen;
+			if (di < cols) {
+				for (r = 0; r < Math.min(di+1, rows); r++) {
+					c = di - r;
+					lastSeen = bucketTile(r, c, bucket, ranking, lastSeen);
+				}
+			} else {
+				for (c = cols-1; c > di - rows; c--) {
+					r = cols - c + (di - cols);
+					lastSeen = bucketTile(r, c, bucket, ranking, lastSeen);
+				}
+			}
+			buckets[di] = bucket;
+			rankings[di] = ranking;
+		}
+
+		var compareBucketToNext = function(bi) {
+			var bucket1 = buckets[bi];
+			var ranking1 = rankings[bi];
+
+			var bucket2 = buckets[bi+1];
+			var ranking2 = rankings[bi+1];
+
+			var b1i = 0;
+			var furniture1 = bucket1[b1i];
+			var frank1 = ranking1[b1i];
+			
+			var b2i = 0;
+			var furniture2 = bucket2[b2i];
+			var frank2 = ranking2[b2i];
+
+			while (b1i < bucket1.length && b2i < bucket2.length) {
+				if (frank1 > frank2) {
+					
+					if (furniture1 !== furniture2) {
+
+						if (!incomingEdges[furniture2.itemId]) incomingEdges[furniture2.itemId] = {};
+						incomingEdges[furniture2.itemId][furniture1.itemId] = true;
+
+						if (!outgoingEdges[furniture1.itemId]) outgoingEdges[furniture1.itemId] = {};
+						outgoingEdges[furniture1.itemId][furniture2.itemId] = true;
+					
+						isRoot[furniture2.itemId] = false;
+					}
+
+					b1i++;
+					furniture1 = bucket1[b1i];
+					frank1 = ranking1[b1i];
+
+				} else if (frank2 > frank1) {
+					if (furniture1 !== furniture2) {
+
+						if (!incomingEdges[furniture1.itemId]) incomingEdges[furniture1.itemId] = {};
+						incomingEdges[furniture1.itemId][furniture2.itemId] = true;
+
+						if (!outgoingEdges[furniture2.itemId]) outgoingEdges[furniture2.itemId] = {};
+						outgoingEdges[furniture2.itemId][furniture1.itemId] = true;
+						
+						isRoot[furniture1.itemId] = false;
+					}
+
+					b2i++;
+					furniture2 = bucket2[b2i];
+					frank2 = ranking2[b2i];
+
+				} else {
+					console.log("WTF!?");
+				}
+			}
+		};
+
+		for (di = 0; di < rows + cols - 1; di++) {
+			bucket = buckets[di];
+			for (var bi = 0; bi < bucket.length - 1; bi++) {
+				var frontId = bucket[bi].itemId;
+				var behindId = bucket[bi+1].itemId;
+
+				if (!outgoingEdges[frontId]) outgoingEdges[frontId] = {};
+				outgoingEdges[frontId][behindId] = true;
+
+				if (!incomingEdges[behindId]) incomingEdges[behindId] = {};
+				incomingEdges[behindId][frontId] = true;
+
+				isRoot[behindId] = false;
+			}
+
+			compareBucketToNext(di);
+		}
+
+		var rootIds = [];
+		for (var fid in isRoot) {
+			if (isRoot[fid]) rootIds.push(fid);
+		}
+
+		var finished = {};
+		ordering = [];
+
+		while (rootIds.length > 0) {
+			var nodeId = rootIds.pop();
+			ordering = addToOrdering(ordering, idDict[nodeId]);
+			for (var nextId in outgoingEdges[nodeId]) {
+				delete incomingEdges[nextId][nodeId];
+				if (Object.keys(incomingEdges[nextId]).length === 0) {
+					rootIds.push(nextId);
+				}
+			}
+		}
+
+		ordering.reverse();
+		return ordering;
+	};
+
 	var resolveGridFurnitureOrdering = function() {
-		gridOrdering = [];
-		var inGridOrdering = {};
-		var c, r, dx, dy, furniture;
 
-		var resolveTile = function(r, c, sectOrdering, inSectOrdering) {
-			var res = getFurnitureTileAtGridTile(r, c);
-			var furniture = res[0];
-			var fr = res[1];
-			var fc = res[2];
-			if (furniture) {
-
-				if (furniture.surfaceOccupants) {
-					var occupant = furniture.surfaceOccupants[fr * furniture.baseCols + fc];
-					if (occupant && inSectOrdering[occupant.itemName] === undefined) {
-						sectOrdering.push(occupant);
-						inSectOrdering[occupant.itemName] = true;
-					}
-				}
-				
-				if (inSectOrdering[furniture.itemName] === undefined) {
-					sectOrdering.push(furniture);
-					inSectOrdering[furniture.itemName] = true;
-				}
-				
-			}
+		var addToSurfaceOrdering = function(so, sf) {
+			so.push(sf);
+			return so;
 		};
 
-		for (var di = Math.min(GRID_ROWS, GRID_COLS) - 1; di >= 0; di--) {
-			console.log(di);
-			var dc = Math.max(0, GRID_COLS - GRID_ROWS) + di;
-			var dr = GRID_ROWS - 1 - di;
-			
-			for (c = dc; c >= 0; c--) {
-				//console.log(dr, c);
-				resolveTile(dr, c, gridOrdering, inGridOrdering);
+		var addToOrdering = function(ordering, furniture) {
+			if (furniture.surfaceOccupants) {
+				var surfaceOrdering = resolveFurnitureOrdering
+				(furniture.baseRows, furniture.baseCols, furniture.surfaceOccupants, addToSurfaceOrdering);
+				ordering = ordering.concat(surfaceOrdering);
 			}
-
-			for (r = dr + 1; r < GRID_ROWS; r++) {
-				//console.log(r, dc);
-				resolveTile(r, dc, gridOrdering, inGridOrdering);
-			}
-		}
-
-		/*
-		var resolveSect = function(sectOrdering, inSectOrdering) {
-
-			var groups = {};
-			var cf = -1;
-			groups[cf] = [sectOrdering.length, sectOrdering.length];
-			
-			for (var i = sectOrdering.length - 1; i >= 0; i--) {
-				if (inGridOrdering[sectOrdering[i].itemName]) {
-					console.log("GROUP FOR " + sectOrdering[i].itemName);
-					cf = gridOrdering.indexOf([sectOrdering[i]]);
-					groups[cf] = [i, i];
-				}
-				else {
-					groups[cf][0]--;
-					console.log("JOIN" + sectOrdering[i].itemName);
-				}
-			}
-
-			for (var pf in groups) {
-				var group = groups[pf];
-				if (group[0] < group[1]) {
-					var groupArr = sectOrdering.slice(group[0], group[1]);
-					for (var ii = 0; ii < groupArr.length; ii++) {
-						inGridOrdering[groupArr[ii].itemName] = true;
-					}
-					if (pf < 0) {
-						gridOrdering = gridOrdering.concat(groupArr);
-					} else {
-						gridOrdering.splice.apply(gridOrdering, [pf, 0].concat(groupArr));
-					}
-				}
-			}
+			ordering.push(furniture);
+			return ordering;
 		};
 
-		for (var di = Math.min(GRID_ROWS, GRID_COLS) - 1; di >= 0; di--) {
-			console.log(di);
-			var dc = Math.max(0, GRID_COLS - GRID_ROWS) + di;
-			var dr = GRID_ROWS - 1 - di;
-
-			var sectOrdering = [];
-			var inSectOrdering = {};
-			
-			for (c = dc; c >= 0; c--) {
-				//console.log(dr, c);
-				resolveTile(dr, c, sectOrdering, inSectOrdering);
-			}
-			resolveSect(sectOrdering, inSectOrdering);
-			
-			//console.log("RIGHT");
-			sectOrdering = [];
-			inSectOrdering = {};
-
-			for (r = dr + 1; r < GRID_ROWS; r++) {
-				//console.log(r, dc);
-				resolveTile(r, dc, sectOrdering, inSectOrdering);
-			}
-			resolveSect(sectOrdering, inSectOrdering);
-		}
-		*/
-
-		gridOrdering.reverse();
-		gridFurniture = gridOrdering;
-
+		gridFurniture = resolveFurnitureOrdering(GRID_ROWS, GRID_COLS, gridFurnitureTiles, addToOrdering);
 	};
 
 	var dropFurnitureInRoom = function() {
