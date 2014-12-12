@@ -22,7 +22,6 @@ body {
   background: url("/images/yellow.jpg");
   color: #9d6827;
   min-width: 40rem;
-  -webkit-font-smoothing: none;
 }
 body,
 html {
@@ -247,6 +246,39 @@ ul {
   position: absolute;
   left: 9999px;
 }
+.furniture-ids {
+  display: none;
+}
+li.furniture-listing {
+  position: relative;
+  display: inline-block;
+  padding: 2px;
+  overflow: hidden;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+}
+li.furniture-listing:hover {
+  background-color: #ff0;
+}
+li.furniture-listing.all-removed {
+  opacity: 0.3;
+}
+li.furniture-listing.all-removed:hover {
+  background-color: transparent;
+}
+.furniture-count {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 0.5rem;
+  -webkit-border-radius: 0.4rem;
+  -moz-border-radius: 0.4rem;
+  border-radius: 0.4rem;
+  background-color: #f88;
+  padding: 0.2rem;
+  color: #fff;
+}
 #furniture-container {
   background-color: #cd9;
   color: #000;
@@ -263,7 +295,7 @@ ul {
   width: 60%;
   overflow: hidden;
 }
-#furniture-container p {
+#furniture-container p.furniture-category {
   padding: 0.5rem;
 }
 #furniture-container ul {
@@ -271,11 +303,4 @@ ul {
   color: #899;
   padding: 0.5rem;
   height: 100%;
-}
-#furniture-container ul li {
-  display: inline-block;
-  padding: 2px;
-}
-#furniture-container ul li:hover {
-  background-color: #ff0;
 }

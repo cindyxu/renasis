@@ -22,7 +22,6 @@ body {
   background: url("/images/yellow.jpg");
   color: #9d6827;
   min-width: 40rem;
-  -webkit-font-smoothing: none;
 }
 body,
 html {

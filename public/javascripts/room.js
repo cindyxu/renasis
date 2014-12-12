@@ -147,7 +147,7 @@ $(function() {
 	};
 
 	var gridTileToPosScaled = function(r, c) {
-		return [(gridOriginXRaw + tileWidthRaw/2 * (r + c) + 1) * SCALE,
+		return [(gridOriginXRaw + tileWidthRaw/2 * (r + c)) * SCALE,
 		((gridOriginYRaw - (GRID_TILE_HYP-1) * (r - c)) - GRID_TILE_HYP) * SCALE];
 	};
 
@@ -212,6 +212,8 @@ $(function() {
 	};
 
 	var createFurnitureObjectFromElement = function(fel) {
+		var itemId = fel.find("li.furniture-id").attr("data-item-id");
+		if (!itemId) return;
 		var fobj = {
 			"images" : {
 				"thumb" : fel.find(".furniture-thumb"),
@@ -219,8 +221,9 @@ $(function() {
 				"outline" : fel.find(".furniture-outline").toArray(),
 				"shadow" : fel.find(".furniture-shadow").toArray(),
 				"tiles" : fel.find(".furniture-tile").toArray(),
+				"tileEdges" : fel.find(".furniture-edge").toArray(),
 			},
-			"itemId" : fel.attr("data-item-id"),
+			"itemId" : itemId,
 			"itemName" : fel.attr("data-item-name"),
 			"itemAlias" : fel.attr("data-item-alias"),
 			"subcategory" : fel.attr("data-item-subcategory"),
@@ -386,7 +389,7 @@ $(function() {
 					wallFurnitureRight[w + removeFurniture.wallCol] = undefined;
 				}
 			}
-			return removeFurniture;
+
 		} else if (idx >= wallFurnitureUnique.length && idx < gridFurniture.length + wallFurnitureUnique.length) {
 			removeFurniture = gridFurniture[idx - wallFurnitureUnique.length];
 			if (hasSurfaceOccupants(removeFurniture)) return;
@@ -407,8 +410,14 @@ $(function() {
 					removeFurniture.gridCol - removeFurniture.surface.gridCol,
 					true);
 			}
-			return removeFurniture;
 		}
+		if (removeFurniture) {	
+			var $newItemIdListing = $("<li class='furniture-id' data-item-id=" + removeFurniture.itemId + ">");
+			$("li[data-item-name=" + removeFurniture.itemName + "]").find(".furniture-ids").append($newItemIdListing);
+			resolveFurnitureElemCount($(".furniture-listing[data-item-name=" + removeFurniture.itemName + "]"));
+		}
+
+		return removeFurniture;
 	};
 
 	var getDragFurnitureOffset = function(dragFurniture) {
@@ -633,6 +642,7 @@ $(function() {
 	};
 
 	var dropFurnitureInRoom = function() {
+
 		if (dragFurniture.subcategory === "floor") {
 			roomFloor = dragFurniture;
 			initBase();
@@ -688,6 +698,9 @@ $(function() {
 			}
 			drawColormap();
 		}
+
+		$("li[data-item-id=" + dragFurniture.itemId + "]").remove();
+		resolveFurnitureElemCount($(".furniture-listing[data-item-name=" + dragFurniture.itemName + "]"));
 	};
 
 	var occupySurface = function(furniture, surface, surfaceRow, surfaceCol, remove) {
@@ -699,8 +712,6 @@ $(function() {
 				surface.surfaceOccupants[ur * surface.baseCols + uc] = remove ? undefined : furniture;
 			}
 		}
-		console.log(surface.surfaceOccupants);
-		console.log("AT", surfaceRow, surfaceCol);
 		furniture.surface = remove ? undefined : surface;
 	};
 
@@ -822,13 +833,39 @@ $(function() {
 			for (var c = 0; c < GRID_COLS; c++) {
 				var fr = r % roomFloor.baseRows;
 				var fc = c % roomFloor.baseCols;
-				var fimg = roomFloor.images.tiles[fr * roomFloor.baseCols + fc];
+				var fTileImg = roomFloor.images.tiles[fr * roomFloor.baseCols + fc];
+				var fEdgeImg = roomFloor.images.tileEdges[fr * roomFloor.baseCols + fc];
+				
 				var gps = gridTileToPosScaled(r, c);
 				var gx = gps[0];
 				var gy = gps[1];
-				ctxBase.drawImage(fimg, 
+				ctxBase.drawImage(fTileImg, 
 					(gx - (roomFloor.baseOffsetX-1) * SCALE), 
 					(gy - roomFloor.baseOffsetY * SCALE));
+
+				if (c === 0) {
+					ctxBase.drawImage(fEdgeImg, 
+						0,
+						0,
+						fEdgeImg.width/2,
+						fEdgeImg.height,
+						(gx - (roomFloor.baseOffsetX-1) * SCALE), 
+						(gy - roomFloor.baseOffsetY * SCALE),
+						fEdgeImg.width/2,
+						fEdgeImg.height);
+				}
+
+				if (r === GRID_ROWS-1) {
+					ctxBase.drawImage(fEdgeImg, 
+						fEdgeImg.width/2,
+						0,
+						fEdgeImg.width/2,
+						fEdgeImg.height,
+						(gx - (roomFloor.baseOffsetX - tileWidthRaw) * SCALE) - fEdgeImg.width/2, 
+						(gy - roomFloor.baseOffsetY * SCALE),
+						fEdgeImg.width/2,
+						fEdgeImg.height);
+				}
 			}
 		}
 	};
@@ -974,6 +1011,21 @@ $(function() {
 		}
 	};
 
+	var resolveFurnitureElemCount = function(elem) {
+		var numIds = elem.find(".furniture-id").length;
+		var furnitureCount = elem.find(".furniture-count");
+		if (numIds > 1) {
+			furnitureCount.html(numIds).show();
+		} else {
+			furnitureCount.hide();
+			if (numIds === 0) {
+				elem.addClass("all-removed");
+			} else {
+				elem.removeClass("all-removed");
+			}
+		}
+	};
+
 	$("canvas").mousedown(function(e) {
 		mx = e.pageX;
 		my = e.pageY;
@@ -1008,8 +1060,10 @@ $(function() {
 		e.preventDefault();
 		var $fel = $(this).parent();
 		var furniture = createFurnitureObjectFromElement($fel);
-		setDragFurniture(furniture);
-		moveDragFurniture(e);
+		if (furniture) {
+			setDragFurniture(furniture);
+			moveDragFurniture(e);
+		}
 	});
 
 	initBase();
@@ -1020,4 +1074,8 @@ $(function() {
 
 	drawAll();
 
+	var furnitureElems = $(".furniture-listing");
+	furnitureElems.each(function(i, e) {
+		resolveFurnitureElemCount($(e));
+	});
 });
